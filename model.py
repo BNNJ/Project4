@@ -50,11 +50,11 @@ class Player:
 
     def __str__(self):
         return (f"{self.first_name} {self.last_name} ({self.id}):"
-                f" rank:{self.rank}")
+                f" rank:{self.rank}\tscore:{self.score}")
 
     def __repr__(self):
         return (f"{self.first_name} {self.last_name} ({self.id}):"
-                f" rank:{self.rank}")
+                f" rank:{self.rank}\tscore:{self.score}")
 
 
 # Player functions
