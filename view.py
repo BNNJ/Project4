@@ -5,30 +5,23 @@ import curses.textpad
 
 
 KEY_ENTER = [10, 13, 343]
+KEY_QUIT = ord('q')
+KEY_UP = curses.KEY_UP
+KEY_DOWN = curses.KEY_DOWN
+KEY_LEFT = curses.KEY_LEFT
+KEY_RIGHT = curses.KEY_RIGHT
+
 QUIT = -1
 
-
 class Win:
-    def __init__(self, h, w, y, x):
+    def __init__(self, screen, h, w, y, x):
+        self.screen = screen
         self.win = curses.newwin(h, w, y, x)
+        self.h = h
+        self.w = w
+        self.y = y
+        self.x = x
         self.win.keypad(1)
-
-    def draw(self, data):
-        self.clear()
-        y, x, h, w = 0, 1, *self.win.getmaxyx()
-        col_width = 0
-        for d in data:
-            col_width = max(col_width, len(d))
-        col_width += 2
-        for d in data:
-            self.win.addstr(y, x, d)
-            y += 1 + (len(d) // w)
-            if y >= h - 1:
-                x += col_width
-                y = 0
-            if x >= w - col_width:
-                break
-        return y, x, h, w
 
     def addstr(self, y, x, s):
         self.win.addstr(y, x, s)
@@ -45,139 +38,122 @@ class Win:
     def highlight_off(self, y, x, w):
         self.win.chgat(y, x, w, curses.A_NORMAL)
 
-    def input_field(self, y, x, title):
-        curses.textpad.rectangle(self.win, y, x, y + 2, 24)
-        self.addstr(y, x + 2, f" {title} ")
+    # def input_field(self, y, x, title):
+    #     curses.textpad.rectangle(self.win, y, x, y + 2, 24)
+    #     self.addstr(y, x + 2, f" {title} ")
 
-    def choice_field(self, y, title, options):
-        h = len(options) + 1
-        curses.textpad.rectangle(self.win, y, 0, y + h, 24)
-        self.addstr(y, 1, f" {title} ")
-        for i, o in enumerate(options):
-            self.addstr(y + i + 1, 1, o)
+    # def choice_field(self, y, title, options):
+    #     h = len(options) + 1
+    #     curses.textpad.rectangle(self.win, y, 0, y + h, 24)
+    #     self.addstr(y, 1, f" {title} ")
+    #     for i, o in enumerate(options):
+    #         self.addstr(y + i + 1, 1, o)
 
-    def get_choice(self, y, options):
-        self.highlight_on(y, 1, 22)
-        num_choices = len(options)
-        selected = 0
-        while True:
-            ch = self.win.getch()
-            if ch == curses.KEY_DOWN and selected < num_choices - 1:
-                self.highlight_off(y + selected, 1, 22)
-                selected += 1
-                self.highlight_on(y + selected, 1, 22)
-            elif ch == curses.KEY_UP and selected > 0:
-                self.highlight_off(y + selected, 1, 22)
-                selected -= 1
-                self.highlight_on(y + selected, 1, 22)
-            elif ch in KEY_ENTER:
-                self.highlight_off(y + selected, 1, 22)
-                return options[selected]
+    # def get_choice(self, y, options):
+    #     self.highlight_on(y, 1, 22)
+    #     num_choices = len(options)
+    #     selected = 0
+    #     while True:
+    #         ch = self.win.getch()
+    #         if ch == curses.KEY_DOWN and selected < num_choices - 1:
+    #             self.highlight_off(y + selected, 1, 22)
+    #             selected += 1
+    #             self.highlight_on(y + selected, 1, 22)
+    #         elif ch == curses.KEY_UP and selected > 0:
+    #             self.highlight_off(y + selected, 1, 22)
+    #             selected -= 1
+    #             self.highlight_on(y + selected, 1, 22)
+    #         elif ch in KEY_ENTER:
+    #             self.highlight_off(y + selected, 1, 22)
+    #             return options[selected]
 
-    def form(self, *fields):
+
+    # def draw_list(self, data):
+    #     self.clear()
+    #     h, w = self.win.getmaxyx()
+    #     max_page(len(data) // h)
+    #     pages = []
+    #     for d in data:
+    #         self.win.addstr(y, x, d)
+    #         y += 1 + (len(d) // w)
+    #         if y >= h - 1:
+    #             x += col_width
+    #             y = 0
+    #         if x >= w - col_width:
+    #             break
+    #     return y, x, h, w
+
+
+class MenuWin(Win):
+    directions = {
+        KEY_UP: -1,
+        KEY_DOWN: 1
+    }
+
+    def __init__(self, screen, h, w, y, x, options, infos=None):
+        self.options = options
+        self.nb_opts = len(options)
+        self.infos = infos
+        self.selected = 0
+        super().__init__(screen, h, w, y, x)
+
+    def draw(self):
         self.clear()
-        for i, f in enumerate(fields):
-            curses.textpad.rectangle(self.win, i * 5 , 0, i * 5 + 2, 24)
-            self.addstr(i * 5, 1, f" {f} ")
-
-        results = {}
-
-        curses.echo()
-        curses.curs_set(1)
-        for i, f in enumerate(fields):
-            results[f] = str(self.win.getstr(i * 5 + 1, 1, 22))
-        curses.noecho()
-        curses.curs_set(0)
-
-        self.clear()
-        self.draw([f"{k}: {str(v)}" for k, v in results.items()])
-        self.addstr(len(results) + 2, 2, "save ? y/n")
-        self.refresh()
-        while True:
-            ch = self.win.getkey()
-            self.clear()
-            if ch in ['y', 'Y']:
-                self.addstr(2, 2, "Saved !")
-                break
-            elif ch in ['n', 'N']:
-                self.addstr(2, 2, "Not saved")
-                break
-        self.win.getch()
-        return results
-
-
-class ChessUi:
-    def __init__(self, screen, menu):
-        self.screen = screen
-        self.box()
-        self.options = [o['option'] for o in menu]
-        self.infos = [o['info'] for o in menu]
-        self.actions = [o['action'] for o in menu]
-        
-        h, w = screen.getmaxyx()
-        menu_width = 24
-
-        self.menu = Win(h - 5, menu_width, 2, 4)
-        self.info = Win(h - 5, w - menu_width - 20, 2, menu_width + 12)
-
-    def refresh(self):
-        self.screen.noutrefresh()
-        self.menu.win.noutrefresh()
-        self.info.win.noutrefresh()
-        curses.doupdate()
-
-    def box(self):
-        h, w = self.screen.getmaxyx()
-        w = w // 2
-        title = " CHESS PRO 3000 "
-        legend = (" move with up and down arrows,"
-                  " select with enter, quit with q ")
-        self.screen.box()
-        self.screen.addstr(0, w - len(title) // 2 - 1, title)
-        self.screen.addstr(h - 1, w - len(legend) // 2 - 1, legend)
-
-    def clear(self):
-        self.screen.clear()
-        self.menu.clear()
-        self.info.clear()
-
-    def draw(self, selected=0):
-        self.menu.draw(self.options)
-        self.menu.highlight_on(selected, 0, self.info.w - 25)
-        self.info.draw(self.infos[selected].split('\n'))
+        for y, o in enumerate(self.options):
+            self.addstr(y, 1, o)
+        self.highlight_on(self.selected, 0, self.w)
         self.refresh()
 
-    def navigate(self, selected=0):
-        # selected = 0
-        self.menu.refresh()
+    def navigate(self):
+        if self.infos is not None:
+            h = self.h
+            _, w = self.screen.getmaxyx()
+            w -= self.w + 12
+            y = self.y
+            x = self.w + 8
+            infowin = InfoWin(self.screen, h, w, y, x, self.infos)
+            infowin.draw(self.selected) 
         while True:
-            ch = self.screen.getch()
-            if ch in [curses.KEY_DOWN, curses.KEY_UP]:
-                self.menu.highlight_off(selected, 0, self.info.w - 25)
-                selected += 1 if ch == curses.KEY_DOWN else -1
-                selected %= len(self.options)
-                self.info.draw(self.infos[selected].split('\n'))
-                self.menu.highlight_on(selected, 0, self.info.w - 25)
-                self.refresh()
-            elif ch == ord('q'):
+            c = self.win.getch()
+            if c in [KEY_UP, KEY_DOWN]:
+                self.highlight_off(self.selected, 0, self.w)
+                self.selected += self.directions[c]
+                self.selected %= self.nb_opts
+                infowin.draw(self.selected)
+                self.highlight_on(self.selected, 0, self.w)
+            elif c == KEY_QUIT:
                 return QUIT
-            elif ch in KEY_ENTER:
-                self.menu.highlight_off(selected, 0, self.info.w - 25)
-                return selected
-            elif ch == curses.KEY_RESIZE:
-                self.clear()
-                h, w = self.screen.getmaxyx()
-                if h < 20 or w < 68:
-                    self.screen.addstr(h // 2 - 1, w // 2 - 10,
-                                       "Stop squeezing me !")
-                    self.screen.getch()
-                else:
-                    self.resize(h, w, selected)
+            elif c in KEY_ENTER:
+                return self.selected
 
 
-def getch(win):
-    return win.getch()
+class InfoWin(Win):
+    def __init__(self, screen, h, w, y, x, infos):
+        # self.infos = infos.split('\n')
+        self.infos = infos
+        super().__init__(screen, h, w, y, x)
 
+    def draw(self, page):
+        self.clear()
+        info = self.infos[page].split('\n')
+        y, x = 0, 0
+        h, w = self.h, self.w
+        for i in info:
+            try:
+                self.addstr(y, x, i)
+            except:
+                pass
+            y += 1 + (len(i) // w)
+        self.refresh()
+
+
+class InputWin(Win):
+    def __init__(self, screen, h, w, y, x, inputs):
+        self.inputs = inputs
+        super().__init__(screen, h, w, y, x)
+
+
+######################################################
 
 def size_check(win):
     H, W = curses.LINES, curses.COLS
@@ -190,9 +166,11 @@ def size_check(win):
     return True
 
 
-def init(win):
+def init(stdscr):
     curses.curs_set(0)
-    win.keypad(1)
+    stdscr.keypad(1)
+    stdscr.box()
+    stdscr.refresh()
 
 
 def start(func):

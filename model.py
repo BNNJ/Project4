@@ -101,7 +101,7 @@ def get_player(_id):
         return None
 
 
-def get_all_players():
+def list_players():
     return [f"{p['first_name']} {p['last_name']}" for p in TinyDB('players.json').all()]
 
 
