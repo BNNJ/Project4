@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import operator
+import controller
+
 from model import *
 from tinydb import *
 
@@ -43,34 +45,33 @@ def test():
     tournament.save()
 
 possible_results = ['black', 'white', 'draw']
+SCORE_MAP = {
+    'black': [1, 0],
+    'white': [0, 1],
+    'draw': [0.5, 0.5]
+}
 
 def main():
     # clear_table('players.json')
     # clear_table('tournaments.json')
     # test()
 
-    players = get_players(range(1, 9))
+    # players = get_players(range(1, 9))
 
-    [print(p) for p in players]
-    print("\n##################\n")
+    # [print(p) for p in players]
+    # print("\n##################\n")
 
-    previous_matchups = {p.id: [] for p in players}
-    score = {p.id: 0 for p in players}
-    for round_count in range(5):
-        matchups = swiss_sort(players, previous_matchups, score, round_count)
-        for m in matchups:
-            m.result = possible_results[randrange(3)]
-            if m.result == "black":
-                m.black.score += 2
-                m.white.score += 0
-            elif m.result == "white":
-                m.black.score += 0
-                m.white.score += 2
-            else:
-                m.black.score += 1
-                m.white.score += 1
+    # previous_matchups = {p.id: [] for p in players}
+    # score = {p.id: 0 for p in players}
+    # for round_count in range(5):
+    #     matchups = swiss_sort(players, previous_matchups, score, round_count)
+    #     for m in matchups:
+    #         m.result = possible_results[randrange(3)]
+    #         m.black.score += SCORE_MAP[m.result][0]
+    #         m.white.score += SCORE_MAP[m.result][1]
 
-    [print(p) for p in players]
+    # [print(p) for p in players]
+    controller.start()
 
 if __name__ == "__main__":
     main()

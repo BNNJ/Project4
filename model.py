@@ -30,6 +30,7 @@ class Player:
         self.gender = gender.lower()
         self.id = _id
         self.score = 0
+        self.full_name = f"{self.first_name + ' ' + self.last_name:<24}"
 
     def serialize(self):
         return self.__dict__
@@ -49,11 +50,11 @@ class Player:
         self.rank = rank
 
     def __str__(self):
-        return (f"{self.first_name} {self.last_name} ({self.id}):"
+        return (f"{self.id}: {self.full_name}"
                 f" rank:{self.rank}\tscore:{self.score}")
 
     def __repr__(self):
-        return (f"{self.first_name} {self.last_name} ({self.id}):"
+        return (f"{self.id}: {self.full_name}"
                 f" rank:{self.rank}\tscore:{self.score}")
 
 
@@ -98,6 +99,10 @@ def get_player(_id):
         )
     else:
         return None
+
+
+def get_all_players():
+    return [f"{p['first_name']} {p['last_name']}" for p in TinyDB('players.json').all()]
 
 
 def get_players(ids):
