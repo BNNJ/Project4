@@ -76,21 +76,21 @@ class Win:
             self.addstr(y + i + 1, 1, o)
 
     def get_choice(self, y, options):
-        self.highlight_on(y, 1, 22)
+        self.highlight_on(y, 1, 23)
         num_choices = len(options)
         selected = 0
         while True:
             ch = self.win.getch()
             if ch == curses.KEY_DOWN and selected < num_choices - 1:
-                self.highlight_off(y + selected, 1, 22)
+                self.highlight_off(y + selected, 1, 23)
                 selected += 1
-                self.highlight_on(y + selected, 1, 22)
+                self.highlight_on(y + selected, 1, 23)
             elif ch == curses.KEY_UP and selected > 0:
-                self.highlight_off(y + selected, 1, 22)
+                self.highlight_off(y + selected, 1, 23)
                 selected -= 1
-                self.highlight_on(y + selected, 1, 22)
+                self.highlight_on(y + selected, 1, 23)
             elif ch in KEY_ENTER:
-                self.highlight_off(y + selected, 1, 22)
+                self.highlight_off(y + selected, 1, 23)
                 return options[selected]
 
     def form(self, *fields):
