@@ -10,24 +10,11 @@ QUIT = -1
 
 class Win:
     def __init__(self, h, w, y, x):
-        self.h = h
-        self.w = w
         self.win = curses.newwin(h, w, y, x)
         self.win.keypad(1)
 
-    # def resize(self, h, w, y, x):
-    #     self.h = h
-    #     self.w = w
-    #     self.y = y
-    #     self.x = x
-    #     del self.win
-    #     self.win = curses.newwin(h, w, y, x)
-
     def draw(self, data):
         self.clear()
-        # for i, line in enumerate(data):
-        #     self.win.addstr(i, 1, line)
-
         y, x, h, w = 0, 1, *self.win.getmaxyx()
         col_width = 0
         for d in data:
@@ -36,18 +23,12 @@ class Win:
         for d in data:
             self.win.addstr(y, x, d)
             y += 1 + (len(d) // w)
-            # if len(d) >= w:
-            #     y += 1
             if y >= h - 1:
                 x += col_width
                 y = 0
             if x >= w - col_width:
                 break
-
         return y, x, h, w
-
-    def kill(self):
-        del self.win
 
     def addstr(self, y, x, s):
         self.win.addstr(y, x, s)
@@ -64,9 +45,9 @@ class Win:
     def highlight_off(self, y, x, w):
         self.win.chgat(y, x, w, curses.A_NORMAL)
 
-    def input_field(self, y, title):
-        curses.textpad.rectangle(self.win, y, 0, y + 2, 24)
-        self.addstr(y, 1, f" {title} ")
+    def input_field(self, y, x, title):
+        curses.textpad.rectangle(self.win, y, x, y + 2, 24)
+        self.addstr(y, x + 2, f" {title} ")
 
     def choice_field(self, y, title, options):
         h = len(options) + 1
@@ -165,16 +146,6 @@ class ChessUi:
         self.menu.highlight_on(selected, 0, self.info.w - 25)
         self.info.draw(self.infos[selected].split('\n'))
         self.refresh()
-
-    def resize(self, h, w, selected):
-        # self.menu.kill()
-        # self.info.kill()
-        menu_width = 24
-        # self.menu = Win(h - 10, menu_width, 2, 4)
-        # self.info = Win(h - 10, w - menu_width - 20, 2, menu_width + 12)
-        self.info.win.resize(h - 10, w - menu_width - 20)
-        self.box()
-        self.draw(selected)
 
     def navigate(self, selected=0):
         # selected = 0
