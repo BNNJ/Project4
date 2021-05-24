@@ -3,9 +3,6 @@
 import operator
 import controller
 
-from model import *
-from tinydb import *
-
 from random import randrange
 
 def swiss_sort(players, prev, score, r):

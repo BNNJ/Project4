@@ -38,6 +38,81 @@ class Win:
     def highlight_off(self, y, x, w):
         self.win.chgat(y, x, w, curses.A_NORMAL)
 
+    def getch(self):
+        return self.win.getch()
+
+
+class MenuWin(Win):
+    directions = {
+        KEY_UP: -1,
+        KEY_DOWN: 1
+    }
+
+    def __init__(self, screen, h, w, y, x, options, infos=None):
+        self.options = options
+        self.nb_opts = len(options)
+        self.infos = infos
+        self.selected = 0
+        super().__init__(screen, h, w, y, x)
+
+    def draw(self):
+        self.clear()
+        [self.addstr(y, 1, o) for y, o in enumerate(self.options)]
+        self.refresh()
+
+    def navigate(self):
+        if self.infos is not None:
+            h = self.h
+            _, w = self.screen.getmaxyx()
+            w -= self.w + 12
+            y = self.y
+            x = self.w + 8
+            infowin = InfoWin(self.screen, h, w, y, x, self.infos)
+            infowin.draw(self.selected) 
+        self.highlight_on(self.selected, 0, self.w)
+        while True:
+            c = self.getch()
+            if c in [KEY_UP, KEY_DOWN]:
+                self.highlight_off(self.selected, 0, self.w)
+                self.selected += self.directions[c]
+                self.selected %= self.nb_opts
+                if self.infos is not None:
+                    infowin.draw(self.selected)
+                self.highlight_on(self.selected, 0, self.w)
+            elif c == KEY_QUIT:
+                return QUIT
+            elif c in KEY_ENTER:
+                self.highlight_off(self.selected, 0, self.w)
+                self.refresh()
+                return self.selected
+
+
+class InfoWin(Win):
+    def __init__(self, screen, h, w, y, x, infos):
+        self.infos = [page.split('\n') for page in infos]
+        # self.infos = [
+        #     [page[i:i+w-2] for i in range(0, len(page), w-2)]
+        #     for page in infos
+        # ]
+        super().__init__(screen, h, w, y, x)
+
+    def draw(self, page=0):
+        self.clear()
+        page = self.infos[page]
+        # [self.addstr(y, 1, s) for y, s in enumerate(page)]
+        y = 0
+        for line in page:
+            self.addstr(y, 0, line)
+            y += 1 + len(line) // self.w
+        self.refresh()
+
+
+class InputWin(Win):
+    def __init__(self, screen, h, w, y, x, inputs):
+        self.inputs = inputs
+        super().__init__(screen, h, w, y, x)
+
+
     # def input_field(self, y, x, title):
     #     curses.textpad.rectangle(self.win, y, x, y + 2, 24)
     #     self.addstr(y, x + 2, f" {title} ")
@@ -82,76 +157,6 @@ class Win:
     #         if x >= w - col_width:
     #             break
     #     return y, x, h, w
-
-
-class MenuWin(Win):
-    directions = {
-        KEY_UP: -1,
-        KEY_DOWN: 1
-    }
-
-    def __init__(self, screen, h, w, y, x, options, infos=None):
-        self.options = options
-        self.nb_opts = len(options)
-        self.infos = infos
-        self.selected = 0
-        super().__init__(screen, h, w, y, x)
-
-    def draw(self):
-        self.clear()
-        for y, o in enumerate(self.options):
-            self.addstr(y, 1, o)
-        self.highlight_on(self.selected, 0, self.w)
-        self.refresh()
-
-    def navigate(self):
-        if self.infos is not None:
-            h = self.h
-            _, w = self.screen.getmaxyx()
-            w -= self.w + 12
-            y = self.y
-            x = self.w + 8
-            infowin = InfoWin(self.screen, h, w, y, x, self.infos)
-            infowin.draw(self.selected) 
-        while True:
-            c = self.win.getch()
-            if c in [KEY_UP, KEY_DOWN]:
-                self.highlight_off(self.selected, 0, self.w)
-                self.selected += self.directions[c]
-                self.selected %= self.nb_opts
-                infowin.draw(self.selected)
-                self.highlight_on(self.selected, 0, self.w)
-            elif c == KEY_QUIT:
-                return QUIT
-            elif c in KEY_ENTER:
-                return self.selected
-
-
-class InfoWin(Win):
-    def __init__(self, screen, h, w, y, x, infos):
-        # self.infos = infos.split('\n')
-        self.infos = infos
-        super().__init__(screen, h, w, y, x)
-
-    def draw(self, page):
-        self.clear()
-        info = self.infos[page].split('\n')
-        y, x = 0, 0
-        h, w = self.h, self.w
-        for i in info:
-            try:
-                self.addstr(y, x, i)
-            except:
-                pass
-            y += 1 + (len(i) // w)
-        self.refresh()
-
-
-class InputWin(Win):
-    def __init__(self, screen, h, w, y, x, inputs):
-        self.inputs = inputs
-        super().__init__(screen, h, w, y, x)
-
 
 ######################################################
 
