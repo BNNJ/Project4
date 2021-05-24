@@ -121,7 +121,7 @@ class InputWin(Win):
         result = self.win.getstr(y + 1, 2, 28)
         curses.curs_set(0)
         curses.noecho()
-        return str(result)
+        return str(result, 'utf-8')
 
     def choice_field(self, y, title, options):
         h = len(options) + 1
@@ -148,7 +148,7 @@ class InputWin(Win):
     def draw(self):
         y = 0
         for f in self.data:
-            if f['type'] in ["string", "date"]:
+            if f['type'] in ["string", "date", "int"]:
                 self.input_field(y, f['title'])
                 y += 4
             elif f['type'] == "menu":
@@ -160,42 +160,39 @@ class InputWin(Win):
         y = 0
         results = {}
         for f in self.data:
-            if f['type'] in ["string", "date"]:
+            if f['type'] in ["string", "date", "int"]:
                 results[f['name']] = self.get_string(y)
                 y += 4
             elif f['type'] == "menu":
                 results[f['name']] = self.get_choice(y, f['options'])
                 y += len(f['options']) + 3
+        return results
+
+    def validate(self, data):
         self.clear()
-        for y, entry in enumerate(results):
-            self.addstr(y, 0, f"{entry}: {results[entry]}")
-        y = len(results) + 2
+        y = 2
+        for y, entry in enumerate(data):
+            self.addstr(y, 0, f"{entry}: {data[entry]}")
+            y += 1
         self.choice_field(y, "save ?", ["Yes", "No"])
         self.refresh()
-        if self.get_choice(y, ["Yes", "No"]) == "yes":
-            return results
-        else:
-            return None
-
-    # def get_choice(self, y, options):
+        return (self.get_choice(y, ["Yes", "No"]) == "Yes")
 
 
-    # def draw_list(self, data):
-    #     self.clear()
-    #     h, w = self.win.getmaxyx()
-    #     max_page(len(data) // h)
-    #     pages = []
-    #     for d in data:
-    #         self.win.addstr(y, x, d)
-    #         y += 1 + (len(d) // w)
-    #         if y >= h - 1:
-    #             x += col_width
-    #             y = 0
-    #         if x >= w - col_width:
-    #             break
-    #     return y, x, h, w
+class Popup(Win):
+
+    def draw(self):
+        self.win.box()
+        self.addstr(0, 1, f" {self.data[0]} ")
+        self.addstr(1, self.w//2 - len(self.data[1])//2, self.data[1])
+        txt = "press any key to continue"
+        self.addstr(self.h - 1, self.w//2 - len(txt)//2, txt)
+        self.refresh()
+        self.getch()
+
 
 ######################################################
+
 
 def size_check(win):
     H, W = curses.LINES, curses.COLS

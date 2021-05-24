@@ -30,7 +30,7 @@ class Player:
         self.gender = gender.lower()
         self.id = _id
         self.score = 0
-        self.full_name = f"{self.first_name + ' ' + self.last_name:<24}"
+        # self.full_name = f"{self.first_name + ' ' + self.last_name:<24}"
 
     def serialize(self):
         return self.__dict__
@@ -50,7 +50,7 @@ class Player:
         self.rank = rank
 
     def __str__(self):
-        return (f"{self.id}: {self.full_name}"
+        return (f"{self.id}: {self.full_name + ' ' + self.last_name:<24}"
                 f" rank:{self.rank}\tscore:{self.score}")
 
     def __repr__(self):

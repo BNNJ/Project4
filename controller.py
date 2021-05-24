@@ -48,6 +48,11 @@ PLAYER_FORM = [
         'title': "birth date",
         'type': "date",
     },
+    {
+        'name': "rank",
+        'title': "rank",
+        'type': "int",
+    },
 ]
 
 def add_player(chess):
@@ -100,7 +105,16 @@ def controller(stdscr):
             win = view.InputWin(stdscr, h-8, w-36, 2, 32, PLAYER_FORM)
             win.draw()
             results = win.get_results()
-            win.getch()
+            if win.validate(results): 
+                model.new_player(**results).save()
+                view.Popup(stdscr, 5, 30, 10, 10, ["info", "player saved"]).draw()
+                # pop.draw()
+                # pop.clear()
+                # del pop
+                stdscr.clear()
+                stdscr.box()
+                stdscr.refresh()
+                menu.draw()
         elif selected == 5:
             win = view.Win(stdscr, h-8, w-36, 2, 32, model.list_players())
             win.draw()
