@@ -21,19 +21,25 @@ QUIT = -1
 
 class Win:
 
-    def __init__(self, screen, h, w, y, x, data):
+    def __init__(self, h, w, y, x, *args, **kwargs):
         self.win = curses.newwin(h, w, y, x)
         self.win.keypad(1)
-        self.screen = screen
         self.h = h
         self.w = w
         self.y = y
         self.x = x
-        self.data = data
+        self.args = args
+        self.kwargs = kwargs
 
     def draw(self):
         self.clear()
-        [self.addstr(y, 1, o) for y, o in enumerate(self.data)]
+        y = 0
+        for v in self.args:
+            self.addstr(y, 1, v)
+            y += 1
+        for k, v in self.kwargs.items():
+            self.addstr(y, 1, f"{k}: {v}")
+        # [self.addstr(y, 1, o) for y, o in enumerate(self.args)]
         self.refresh()
 
     def addstr(self, y, x, s):
@@ -57,19 +63,23 @@ class Win:
 
 class MenuWin(Win):
 
-    def __init__(self, screen, h, w, y, x, data):
-        self.nb_opts = len(data)
+    def __init__(self, h, w, y, x, *args, **kwargs):
+        self.nb_opts = len(kwargs)
         self.selected = 0
-        super().__init__(screen, h, w, y, x, data)
+        super().__init__(h, w, y, x, *args, **kwargs)
+
+    def draw(self):
+        [self.addstr(y, 1, opt) for y, opt in enumerate(self.kwargs)]
 
     def navigate(self):
-        infos = list(self.data.values())
+        infos = list(self.kwargs.values())
         h = self.h
-        _, w = self.screen.getmaxyx()
-        w -= self.w + 12
+        # _, w = self.screen.getmaxyx()
+        w = curses.COLS - self.w - 12
+        # w -= self.w + 12
         y = self.y
         x = self.w + 8
-        infowin = InfoWin(self.screen, h, w, y, x, infos)
+        infowin = InfoWin(h, w, y, x, *infos)
         infowin.draw(self.selected) 
         self.highlight_on(self.selected, 0, self.w)
         while True:
@@ -90,22 +100,9 @@ class MenuWin(Win):
 
 class InfoWin(Win):
 
-    def __init__(self, screen, h, w, y, x, data):
-        data = [page.split('\n') for page in data]
-        # self.infos = [
-        #     [page[i:i+w-2] for i in range(0, len(page), w-2)]
-        #     for page in infos
-        # ]
-        super().__init__(screen, h, w, y, x, data)
-
     def draw(self, page=0):
         self.clear()
-        page = self.data[page]
-        # [self.addstr(y, 1, s) for y, s in enumerate(page)]
-        y = 0
-        for line in page:
-            self.addstr(y, 0, line)
-            y += 1 + len(line) // self.w
+        self.addstr(0, 0, self.args[page])
         self.refresh()
 
 
@@ -123,14 +120,14 @@ class InputWin(Win):
         curses.noecho()
         return str(result, 'utf-8')
 
-    def choice_field(self, y, title, options):
+    def choice_field(self, y, title, *options):
         h = len(options) + 1
         curses.textpad.rectangle(self.win, y, 0, y + h, 32)
         self.addstr(y, 1, f" {title} ")
         for i, o in enumerate(options):
             self.addstr(y + i + 1, 2, o)
 
-    def get_choice(self, y, options):
+    def get_choice(self, y, *options):
         selected = 0
         nb_opt = len(options)
         self.highlight_on(y + 1, 1, 31)
@@ -147,48 +144,64 @@ class InputWin(Win):
 
     def draw(self):
         y = 0
-        for f in self.data:
+        for f in self.args:
             if f['type'] in ["string", "date", "int"]:
                 self.input_field(y, f['title'])
                 y += 4
             elif f['type'] == "menu":
-                self.choice_field(y, f['title'], f['options'])
+                self.choice_field(y, f['title'], *f['options'])
                 y += len(f['options']) + 3
         self.refresh()
 
     def get_results(self):
         y = 0
         results = {}
-        for f in self.data:
+        for f in self.args:
             if f['type'] in ["string", "date", "int"]:
                 results[f['name']] = self.get_string(y)
                 y += 4
             elif f['type'] == "menu":
-                results[f['name']] = self.get_choice(y, f['options'])
+                results[f['name']] = self.get_choice(y, *f['options'])
                 y += len(f['options']) + 3
         return results
 
     def validate(self, data):
         self.clear()
-        y = 2
-        for y, entry in enumerate(data):
+        y = 0
+        for entry in data:
             self.addstr(y, 0, f"{entry}: {data[entry]}")
             y += 1
-        self.choice_field(y, "save ?", ["Yes", "No"])
+        y += 2
+        self.choice_field(y, "save ?", "Yes", "No")
         self.refresh()
-        return (self.get_choice(y, ["Yes", "No"]) == "Yes")
+        return (self.get_choice(y, "Yes", "No") == "Yes")
 
 
 class Popup(Win):
 
+    # def __init__(self, h, w, y, x, *args, **kwargs):
+    #     min_h = 5
+    #     min_w = 29
+    #     max_w = 60
+    #     self.message = [arg[1][i:max_w+i] for i in range(0, len(arg[1]), max_w)]
+    #     msg_len = len(args[1])
+    #     h = max(msg_len // w, 1) + 3
+    #     w = max()
+    #     y = curses.LINES // 2 - h // 2
+    #     x = curses.COLS // 2 - w // 2
+    #     super().__init__(h, w, y, x, *args, **kwargs)
+
     def draw(self):
         self.win.box()
-        self.addstr(0, 1, f" {self.data[0]} ")
-        self.addstr(1, self.w//2 - len(self.data[1])//2, self.data[1])
-        txt = "press any key to continue"
+        self.addstr(0, 1, f" {self.args[0]} ")
+        # self.addstr(1, 1, self.args[1])
+        self.addstr(1, self.w//2 - len(self.args[1])//2, self.args[1])
+        txt = " press any key to continue "
         self.addstr(self.h - 1, self.w//2 - len(txt)//2, txt)
         self.refresh()
         self.getch()
+        self.clear()
+        self.refresh()
 
 
 ######################################################
