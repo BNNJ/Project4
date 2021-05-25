@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import curses
 import curses.textpad
 
@@ -74,9 +75,7 @@ class MenuWin(Win):
     def navigate(self):
         infos = list(self.kwargs.values())
         h = self.h
-        # _, w = self.screen.getmaxyx()
-        w = curses.COLS - self.w - 12
-        # w -= self.w + 12
+        w = os.get_terminal_size().columns - self.w - 12
         y = self.y
         x = self.w + 8
         infowin = InfoWin(h, w, y, x, *infos)
@@ -179,23 +178,23 @@ class InputWin(Win):
 
 class Popup(Win):
 
-    # def __init__(self, h, w, y, x, *args, **kwargs):
-    #     min_h = 5
-    #     min_w = 29
-    #     max_w = 60
-    #     self.message = [arg[1][i:max_w+i] for i in range(0, len(arg[1]), max_w)]
-    #     msg_len = len(args[1])
-    #     h = max(msg_len // w, 1) + 3
-    #     w = max()
-    #     y = curses.LINES // 2 - h // 2
-    #     x = curses.COLS // 2 - w // 2
-    #     super().__init__(h, w, y, x, *args, **kwargs)
+    def __init__(self, h, w, y, x, *args, **kwargs):
+        min_w = 29
+        max_w = 58 #maximum line length
+        self.message = [args[1][i:max_w+i] for i in range(0, len(args[1]), max_w)]
+        h = len(self.message) + 3
+        w = max(min_w + 4, len(self.message[0]) + 4)
+        y = curses.LINES // 2 - h // 2
+        x = curses.COLS // 2 - w // 2
+        super().__init__(h, w, y, x, *args, **kwargs)
 
     def draw(self):
         self.win.box()
         self.addstr(0, 1, f" {self.args[0]} ")
-        # self.addstr(1, 1, self.args[1])
-        self.addstr(1, self.w//2 - len(self.args[1])//2, self.args[1])
+        for y, line in enumerate(self.message):
+            x = self.w//2 - len(line)//2
+            self.addstr(y + 1, x, line)
+        # self.addstr(1, 1, self.message[0])
         txt = " press any key to continue "
         self.addstr(self.h - 1, self.w//2 - len(txt)//2, txt)
         self.refresh()
@@ -205,18 +204,6 @@ class Popup(Win):
 
 
 ######################################################
-
-
-def size_check(win):
-    H, W = curses.LINES, curses.COLS
-    if H < 20 or W < 63:
-        addstr(win, H // 2 - 1, W, "That terminal is way too small, dude !")
-        addstr(win, H // 2, W, "Press any key to quit")
-        win.refresh()
-        win.getch()
-        return False
-    return True
-
 
 def init(stdscr):
     curses.curs_set(0)
