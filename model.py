@@ -159,11 +159,12 @@ class Tournament:
 
     def save(self):
         db = TinyDB('tournaments.json')
-        tourney = db.get(where('name') == self.name)
-        if tourney is None:
-            db.insert(self.serialize())
-        else:
-            db.update(self.serialize(), doc_ids=[tourney.doc_id])
+        db.insert(self.serialize())
+        # tourney = db.get(where('name') == self.name)
+        # if tourney is None:
+        #     db.insert(self.serialize())
+        # else:
+        #     db.update(self.serialize(), doc_ids=[tourney.doc_id])
 
     def update_scores(self, players):
         self.score = {p.id: p.score for p in players}
@@ -201,6 +202,9 @@ def load_tournament(name):
         _id=tourney.doc_id
     )
 
+
+def list_tournaments():
+    return [f"{t['name']}" for t in TinyDB('tournaments.json').all()]
 
 ###############################################################################
 
