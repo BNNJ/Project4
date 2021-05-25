@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
+import os
 import operator
 import controller
 
-from random import randrange
+# from random import randrange
 
 def swiss_sort(players, prev, score, r):
     players = sorted(players, key=operator.attrgetter('rank'))
@@ -48,27 +49,18 @@ SCORE_MAP = {
     'draw': [0.5, 0.5]
 }
 
+
+def size_check():
+    term_size = os.get_terminal_size()
+    rows = term_size.lines
+    cols = term_size.columns
+    return (rows >= 30 and cols >= 80)
+
 def main():
-    # clear_table('players.json')
-    # clear_table('tournaments.json')
-    # test()
-
-    # players = get_players(range(1, 9))
-
-    # [print(p) for p in players]
-    # print("\n##################\n")
-
-    # previous_matchups = {p.id: [] for p in players}
-    # score = {p.id: 0 for p in players}
-    # for round_count in range(5):
-    #     matchups = swiss_sort(players, previous_matchups, score, round_count)
-    #     for m in matchups:
-    #         m.result = possible_results[randrange(3)]
-    #         m.black.score += SCORE_MAP[m.result][0]
-    #         m.white.score += SCORE_MAP[m.result][1]
-
-    # [print(p) for p in players]
-    controller.start()
+    if size_check:
+        controller.start()
+    else:
+        print("That terminal is too small for such a big program !")
 
 if __name__ == "__main__":
     main()
