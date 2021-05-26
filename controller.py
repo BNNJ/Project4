@@ -6,112 +6,202 @@ import view
 
 KEY_ENTER = [10, 13, 343]
 QUIT = -1
-MENU = [
+MENU = {
+    'current tournament': (
+        "More options for the current tournament:\n"
+        "* save tournament\n"
+        "* register round or match\n"
+        "* declare winner\n"
+        "..."
+    ),
+    'start a tournament': "Start a new tournament",
+    'load a tournament': (
+        "Load a previously started tournament,"
+        " from the tournament database"
+    ),
+    'tournament list': "Display the list of tournaments in the database",
+    'add a player': "Add a new player to the database",
+    'show all players': "Show all players in the database",
+    'form test': "Test form",
+    'popup test': "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", 
+    'line test': "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. \n Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", 
+}
+
+TOURNAMENT_MENU = {
+    'set match results': "Set the results for a match from the current round",
+    'save': "save the current state of the tournament",
+    'show players': "Show the players participating in the tournament",
+}
+
+TOURNAMENT_FORM = [
     {
-        'option': "current tournament",
-        'info': ("More options for the current tournament:\n"
-                 "* save tournament\n"
-                 "* register round or match\n"
-                 "* declare winner\n"
-                 "..."),
-        'action': lambda:None
+        'name': "name",
+        'title': "tournament name",
+        'type': "string"
     },
     {
-        'option': "start a tournament",
-        'info': "Start a new tournament",
-        'action': lambda:None
+        'name': "location",
+        'title': "location",
+        'type': "string"
     },
     {
-        'option': "load a tournament",
-        'info': ("Load a previously started tournament,"
-                 " from the tournament database"),
-        'action': lambda:None
+        'name': "date",
+        'title': "date",
+        'type': "date"
     },
     {
-        'option': "tournament list",
-        'info': "Display the list of tournaments in the database",
-        'action': lambda:None
+        'name': "players",
+        'title': "players",
+        'type': "menu",
+        'nb_choices': 8,
+        'options': {}
     },
     {
-        'option': "add a player",
-        'info': "Add a new player to the database",
-        'action': lambda:None
+        'name': "time_format",
+        'title': "time format",
+        'type': "select",
+        'options': ["bullet", "blitz", "fast move"]
     },
     {
-        'option': "show all players",
-        'info': "Show all players in the database",
-        'action': lambda:None
-    },
-    {
-        'option': "line test",
-        'info': "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. \n Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", 
-        'action': lambda:None
-    },
-    {
-        'option': "column test",
-        'info': "foobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\nfoobar\n",
-        'action': lambda:None
+        'name': "description",
+        'title': "description",
+        'type': "long"
     }
 ]
 
-def add_player(chess):
-    chess.info.clear()
-    chess.info.input_field(0, "first name")
-    chess.info.input_field(4, "last name")
-    chess.info.choice_field(8, "gender", ["male", "female"])
-    chess.info.input_field(13, "birth date")
-    chess.info.refresh()
+PLAYER_FORM = [
+    {
+        'name': "first_name",
+        'title': "first name",
+        'type': "string",
+    },
+    {
+        'name': "last_name",
+        'title': "last name",
+        'type': "string",
+    },
+    {
+        'name': "gender",
+        'title': "gender",
+        'type': "select",
+        'options': ["Male", "Female"],
+    },
+    {
+        'name': "birth_date",
+        'title': "birth date",
+        'type': "date",
+    },
+    {
+        'name': "rank",
+        'title': "rank",
+        'type': "int",
+    }
+]
 
-    p = {}
-    curses.echo()
-    curses.curs_set(1)
-    p['first_name'] = chess.info.win.getstr(1, 1, 22)
-    p['last_name'] = chess.info.win.getstr(5, 1, 22)
-    curses.curs_set(0)
-    p['gender'] = chess.info.get_choice(9, ["male", "female"])
-    curses.curs_set(1)
-    p['birth_date'] = chess.info.win.getstr(14, 1, 22)
-    curses.curs_set(0)
-    curses.noecho()
 
-    chess.info.clear()
-    chess.info.draw(p.values())
-    # chess.info.clear()
-    # chess.info.refresh()
-    chess.info.choice_field(len(p) + 2, "save ?", ["yes", "no"])
-    save = chess.info.get_choice(len(p) + 3, ["yes", "no"])
-    chess.info.clear()
-    if save == "yes":
-        chess.info.addstr(2, 2, "Player saved")
-    if save == "no":
-        chess.info.addstr(2, 2, "Player not saved")
-    chess.info.win.getch()
+TEST_FORM = [
+    {
+        'name': "test",
+        'title': "test",
+        'type': "date",
+    }
+]
 
-def controller(stdscr):
-    if not view.size_check(stdscr):
-        return
-
-    view.init(stdscr)
-
-    chess = view.ChessUi(stdscr, MENU)
-    chess.draw()
-    # selected = 0
+def tournament_menu(h, w):
+    menu = view.MenuWin(h-8, 24, 2, 2, **TOURNAMENT_MENU)
+    menu.draw()
     while True:
-        selected = chess.navigate()
+        selected = menu.navigate()
         if selected == QUIT:
             break
-        elif selected == 5:
-            chess.info.draw(model.get_all_players())
-            chess.info.refresh()
+        elif selected == 0:
+            pass
+        elif selected == 1:
+            pass
+        elif selected == 2:
+            pass
+        elif selected == 3:
+            pass
+
+
+def new_tournament(h, w, y, x):
+    form = TOURNAMENT_FORM
+    form[3]['options'] = model.list_players()
+    win = view.InputWin(h, w, y, x, *form)
+    win.draw()
+    results = win.get_results()
+    if win.validate(results):
+        tournament = model.new_tournament(**results)
+        tournament.save()
+        view.Popup("info", "new tournament created").draw()
+        return tournament
+    else:
+        view.Popup("info", "tournament discarded").draw()
+
+
+def load_tournament(h):
+    tournament = list_tournaments(h)
+    return model.load_tournament(tournament)
+
+def list_tournaments(h):
+    win = view.MenuWin(h, 24, 2, 2, **model.list_tournaments())
+    win.draw()
+    selected = win.navigate()
+    win.clear()
+    win.refresh()
+    return selected
+
+
+def new_player(h, w, y, x):
+    win = view.InputWin(h, w, y, x, *PLAYER_FORM)
+    win.draw()
+    results = win.get_results()
+    if win.validate(results):
+        model.new_player(**results).save()
+        view.Popup("info", "player saved").draw()
+    else:
+        view.Popup("info", "player discarded").draw()
+
+
+def list_players(h):
+    win = view.MenuWin(h, 24, 2, 2, **model.list_players())
+    win.draw()
+    win.navigate()
+    win.clear()
+    win.refresh()
+
+
+def controller(stdscr):
+    view.init(stdscr)
+    h, w = stdscr.getmaxyx()
+    menu = view.MenuWin(h-8, 24, 2, 2, **MENU)
+    tournament = None
+    while True:
+        menu.draw()
+        # menu.refresh()
+        selected = menu.navigate()
+        if selected == QUIT:
+            break
+        elif selected == 0:
+            menu.clear()
+            tournament_menu(h, w)
+        elif selected == 1:
+            tournament = new_tournament(h-8, w-36, 2, 32)
+        elif selected == 2:
+            tournament = load_tournament(h-8)
+        elif selected == 3:
+            list_tournaments(h-8)
         elif selected == 4:
-            add_player(chess)
-            # chess.info.form("first name", "last name", "gender")
-            # chess.draw()
-        else:
-            MENU[selected]['action']()
+            new_player(h-8, w-36, 2, 32)
+        elif selected == 5:
+            list_players(h-8)
+        elif selected == 6:
+            pass
+        elif selected == 7:
+            view.Popup("bla", "HELLO").draw()
     view.stop()
 
 
 def start():
     view.start(controller)
-    # controller(None)
+    # print(type(model.list_players()))

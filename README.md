@@ -1,6 +1,6 @@
 # Chess matcher
 
-CHezz tournament organizer
+Chess tournament organizer with a curses TUI
 
 ## setup
 
