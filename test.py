@@ -5,7 +5,7 @@ import curses.textpad
 
 MENU = {
     'current tournament': (
-        "More options for the current tournament:\n"
+        "More options for the current tournintament:\n"
         "* save tournament\n"
         "* register round or match\n"
         "* declare winner\n"
@@ -31,7 +31,17 @@ t = {
 }
 
 
-def test(foo, bar, hello, world):
-	print(foo, bar, hello, world)
+class Foo:
+	def __init__(self, x, y):
+		self.x = x
+		self.y = y
 
-test(**t)
+	def print(self):
+		print(self.x, self.y)
+
+class Bar(Foo):
+	def __init__(self, x, y):
+		super().__init__(x, y)
+		self.x = x+2
+
+foo = Foo(3, 4)
