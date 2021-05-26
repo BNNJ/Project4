@@ -102,7 +102,13 @@ def get_player(_id):
 
 
 def list_players():
-    return [f"{p['first_name']} {p['last_name']}" for p in TinyDB('players.json').all()]
+    return {
+        f"{str(p.doc_id):<3}: {p['first_name']} {p['last_name']}": (
+            f"gender:     {p['gender']}\n"
+            f"birth_date: {p['birth_date']}\n"
+            f"rank:       {p['rank']}"
+        ) for p in TinyDB('players.json').all()
+    }
 
 
 def get_players(ids):
@@ -182,12 +188,12 @@ class Tournament:
         return f"{self.name} ({self.id}): {self.location} on {self.date}"
 
 
-def new_tournament(name, location, date, players, time_format):
-    return Tournament(name, location, date, players, time_format)
+def new_tournament(name, location, date, players, time_format, description):
+    return Tournament(name, location, date, players, time_format, description)
 
 
-def load_tournament(name):
-    tourney = TinyDB('tournaments.json').get(where('name') == name)
+def load_tournament(id):
+    tourney = TinyDB('tournaments.json').get(doc_id=id)
     return Tournament(
         tourney['name'],
         tourney['location'],
@@ -204,7 +210,15 @@ def load_tournament(name):
 
 
 def list_tournaments():
-    return [f"{t['name']}" for t in TinyDB('tournaments.json').all()]
+    return {
+        t['name']: (
+            f"location:    {t['location']}\n"
+            f"date:        {t['date']}\n"
+            f"players:     {t['players']}\n"
+            f"time format: {t['time_format']}\n"
+            f"description: {t['description']}\n"
+        ) for t in TinyDB('tournaments.json').all()
+    }
 
 ###############################################################################
 

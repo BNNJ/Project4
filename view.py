@@ -16,7 +16,9 @@ KEY_BACK = [curses.KEY_BACKSPACE, ord('\b'), ord('\x7f')]
 
 DIRECTIONS = {
     KEY_UP: -1,
-    KEY_DOWN: 1
+    KEY_DOWN: 1,
+    KEY_LEFT: -1,
+    KEY_RIGHT: 1
 }
 
 QUIT = -1
@@ -67,37 +69,64 @@ class Win:
 
 class MenuWin(Win):
 
-    def __init__(self, h, w, y, x, *args, **kwargs):
+    def __init__(self, h, w, y, x, **kwargs):
         self.nb_opts = len(kwargs)
         self.selected = 0
-        super().__init__(h, w, y, x, *args, **kwargs)
+        self.max_lines = h - 4
+        self.options = [
+            list(kwargs)[i:i+self.max_lines]
+            for i in range(0, len(kwargs), self.max_lines)
+        ]
+        self.infos = list(kwargs.values())
+        super().__init__(h, w, y, x)
 
-    def draw(self):
-        [self.addstr(y, 1, opt) for y, opt in enumerate(self.kwargs)]
+    def draw(self, page=0):
+        [self.addstr(y, 1, o) for y, o in enumerate(self.options[page])]
+        nb_lines = len(self.options[0])
+        if nb_lines > self.max_lines:
+            total = len()
+            left_arrow = "<" if page > 0 else " "
+            right_arrow = ">" if page < total else " "
+            self.addstr(self.h-1, 2,
+                        f"{left_arrow} {page:02d}/{total:02d} {right_arrow}")
+        # self.refresh()
 
     def navigate(self):
-        infos = list(self.kwargs.values())
         h = self.h
         w = os.get_terminal_size().columns - self.w - 12
         y = self.y
         x = self.w + 8
-        infowin = InfoWin(h, w, y, x, *infos)
+        infowin = InfoWin(h, w, y, x, *self.infos)
         infowin.draw(self.selected) 
         self.highlight_on(self.selected, 0, self.w)
+        page = 0
+        page_max = len(self.options) - 1
         while True:
             c = self.getch()
             if c in [KEY_UP, KEY_DOWN]:
                 self.highlight_off(self.selected, 0, self.w)
                 self.selected += DIRECTIONS[c]
-                self.selected %= self.nb_opts
+                self.selected %= len(self.options[page])
                 infowin.draw(self.selected)
+                self.highlight_on(self.selected, 0, self.w)
+            elif c == KEY_LEFT and page > 0:
+                page -= 1
+                self.clear()
+                self.draw(page)
+                self.selected = 0
+                self.highlight_on(self.selected, 0, self.w)
+            elif c == KEY_RIGHT and page < page_max:
+                page += 1
+                self.clear()
+                self.draw(page)
+                self.selected = 0
                 self.highlight_on(self.selected, 0, self.w)
             elif c == KEY_QUIT:
                 return QUIT
             elif c in KEY_ENTER:
                 self.highlight_off(self.selected, 0, self.w)
                 self.refresh()
-                return self.selected
+                return self.selected + page*(self.max_lines)
 
 
 class InfoWin(Win):
@@ -233,16 +262,17 @@ class InputWin(Win):
         curses.curs_set(0)
         return txt
 
-    def choice_menu(self, y, title, *options):
+    def select_field(self, y, title, *options):
         h = len(options) + 1
         curses.textpad.rectangle(self.win, y, 0, y + h, 32)
         self.addstr(y, 1, f" {title} ")
         for i, o in enumerate(options):
             self.addstr(y + i + 1, 2, o)
 
-    def get_choice(self, y, *options):
+    def get_selection(self, y, *options):
         selected = 0
         nb_opt = len(options)
+        players = []
         self.highlight_on(y + 1, 1, 31)
         while True:
             c = self.win.getch()
@@ -254,6 +284,28 @@ class InputWin(Win):
             elif c in KEY_ENTER:
                 self.highlight_off(y + selected + 1, 1, 31)
                 return options[selected]
+
+    def get_menu(self, y, nb_choices, **options):
+        menu = MenuWin(self.h, 24, 2, 2, **options)
+        menu.draw()
+        self.highlight_on(y+1, 1, 31)
+        self.getch()
+
+        players = []
+        while len(players) < nb_choices:
+            selected = menu.navigate()
+            if selected in players:
+                Popup("error", "This player is already in the selected pool").draw()
+            else:
+                players.append(selected)
+                Popup("info", f"{len(players)}/{nb_choices} players selected").draw()
+
+        menu.clear()
+        menu.refresh()
+
+        self.highlight_off(y+1, 1, 31)
+        self.draw()
+        return players
 
     def draw(self):
         y = 0
@@ -267,9 +319,12 @@ class InputWin(Win):
             elif f['type'] == "long":
                 self.long_field(y, f['title'], self.results.get(f['name'], ""))
                 y += 8
-            elif f['type'] == "menu":
-                self.choice_menu(y, f['title'], *f['options'])
+            elif f['type'] == "select":
+                self.select_field(y, f['title'], *f['options'])
                 y += len(f['options']) + 3
+            elif f['type'] == "menu":
+                self.input_field(y, f['title'], "press a key to access menu")
+                y += 4
         self.refresh()
 
     def get_results(self):
@@ -287,9 +342,12 @@ class InputWin(Win):
             elif f['type'] == "long":
                 self.results[f['name']] = self.get_long(y)
                 y += 8
-            elif f['type'] == "menu":
-                self.results[f['name']] = self.get_choice(y, *f['options'])
+            elif f['type'] == "select":
+                self.results[f['name']] = self.get_selection(y, *f['options'])
                 y += len(f['options']) + 3
+            elif f['type'] == "menu":
+                self.results[f['name']] = self.get_menu(y, f['nb_choices'], **f['options'])
+                y += 4
         return self.results
 
     def validate(self, data):
@@ -299,9 +357,9 @@ class InputWin(Win):
             self.addstr(y, 0, f"{entry}: {data[entry]}")
             y += 1
         y += 4
-        self.choice_menu(y, "save ?", "Yes", "No")
+        self.select_field(y, "save ?", "Yes", "No")
         self.refresh()
-        return (self.get_choice(y, "Yes", "No") == "Yes")
+        return (self.get_selection(y, "Yes", "No") == "Yes")
 
 
 class Popup(Win):

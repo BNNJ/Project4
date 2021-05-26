@@ -57,6 +57,7 @@ def size_check():
     return (rows >= 30 and cols >= 80)
 
 def main():
+    # model.clear_table('tournament.json')
     if size_check:
         controller.start()
     else:
