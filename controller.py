@@ -188,13 +188,7 @@ def controller(stdscr):
         elif selected == 5:
             list_players(h-8, w-36, 2, 32)
         elif selected == 6:
-            win = view.InputWin(h-8, w-36, 2, 32, *TEST_FORM)
-            win.draw()
-            results = win.get_results()
-            if win.validate(results):
-                view.Popup("info", "NICE").draw()
-            else:
-                view.Popup("info", "OOPS").draw()
+            pass
         elif selected == 7:
             view.Popup("bla", "HELLO").draw()
     view.stop()

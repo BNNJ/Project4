@@ -41,7 +41,6 @@ class Win:
             y += 1
         for k, v in self.kwargs.items():
             self.addstr(y, 1, f"{k}: {v}")
-        # [self.addstr(y, 1, o) for y, o in enumerate(self.args)]
         self.refresh()
 
     def addstr(self, y, x, s):
@@ -110,10 +109,14 @@ class InfoWin(Win):
 
 
 class InputWin(Win):
+    def __init__(self, y, x, h, w, *args):
+        self.results = {}
+        super().__init__(y, x, h, w, *args)
 
-    def input_field(self, y, title):
+    def input_field(self, y, title, data):
         curses.textpad.rectangle(self.win, y, 0, y + 2, 32)
         self.addstr(y, 1, f" {title} ")
+        self.addstr(y+1, 2, data)
 
     def get_string(self, y):
         curses.echo()
@@ -145,13 +148,13 @@ class InputWin(Win):
                 self.win.addstr(chr(c))
                 x += 1
         curses.curs_set(0)
-        return f"{buff[:2]}/{buff[2:4]}/{buff[4:8]}"
+        return buff
 
 
-    def date_field(self, y, title):
+    def date_field(self, y, title, data):
         curses.textpad.rectangle(self.win, y, 0, y + 2, 13)
         self.addstr(y, 1, f" {title} ")
-        self.addstr(y + 1, 2, f"  /  /    ")
+        self.addstr(y + 1, 2, data)
 
     def get_date(self, y):
         curses.curs_set(1)
@@ -191,9 +194,12 @@ class InputWin(Win):
         curses.curs_set(0)
         return f"{buff[:2]}/{buff[2:4]}/{buff[4:8]}"
 
-    def long_field(self, y, title):
+    def long_field(self, y, title, data):
         curses.textpad.rectangle(self.win, y, 0, y + 7, 32)
         self.addstr(y, 1, f" {title} ")
+        txt = [data[i:i+28] for i in range(0, len(data), 28)]
+        for y, line in enumerate(txt):
+            self.addstr(y+1, 2, line)
 
     def get_long(self, y):
         curses.curs_set(1)
@@ -253,13 +259,13 @@ class InputWin(Win):
         y = 0
         for f in self.args:
             if f['type'] in ["string", "int"]:
-                self.input_field(y, f['title'])
+                self.input_field(y, f['title'], self.results.get(f['name'], ""))
                 y += 4
             elif f['type'] == "date":
-                self.date_field(y, f['title'])
+                self.date_field(y, f['title'], self.results.get(f['name'], "  /  /    "))
                 y += 4
             elif f['type'] == "long":
-                self.long_field(y, f['title'])
+                self.long_field(y, f['title'], self.results.get(f['name'], ""))
                 y += 8
             elif f['type'] == "menu":
                 self.choice_menu(y, f['title'], *f['options'])
@@ -268,24 +274,23 @@ class InputWin(Win):
 
     def get_results(self):
         y = 0
-        results = {}
         for f in self.args:
             if f['type'] == "string":
-                results[f['name']] = self.get_string(y)
+                self.results[f['name']] = self.get_string(y)
                 y += 4
             elif f['type'] == "int":
-                results[f['name']] = self.get_int(y)
+                self.results[f['name']] = self.get_int(y)
                 y += 4
             elif f['type'] == "date":
-                results[f['name']] = self.get_date(y)
+                self.results[f['name']] = self.get_date(y)
                 y += 4
             elif f['type'] == "long":
-                results[f['name']] = self.get_long(y)
+                self.results[f['name']] = self.get_long(y)
                 y += 8
             elif f['type'] == "menu":
-                results[f['name']] = self.get_choice(y, *f['options'])
+                self.results[f['name']] = self.get_choice(y, *f['options'])
                 y += len(f['options']) + 3
-        return results
+        return self.results
 
     def validate(self, data):
         self.clear()
@@ -323,6 +328,9 @@ class Popup(Win):
         self.getch()
         self.clear()
         self.refresh()
+
+
+######################################################
 
 
 ######################################################
