@@ -389,11 +389,35 @@ class Popup(Win):
 
 ######################################################
 
-
-######################################################
+def leap_year(y):
+    if y % 4 != 0:
+        return False
+    elif y % 100 != 0:
+        return True
+    elif y % 400 != 0:
+        return False
+    else:
+        return True
 
 def date_is_valid(d):
-    return (len(d) == 8) and (0 < int(d[:2]) <= 31) and (0 < int(d[2:4]) <= 12)
+    day = int(d[:2])
+    month = int(d[2:4])
+    year = int(d[4:8])
+
+    if (len(d) != 8)
+        return False
+    elif (month <= 0) or (month > 12):
+        return False
+    elif (month == 2) and (not leap_year(year)) and (day > 28):
+        return False
+    elif (month == 2) and (day > 29):
+        return False
+    elif (month in [4, 6, 9, 11]) and day > 30:
+        return False
+    elif day > 31:
+        return False
+    else:
+        return True
 
 def init(stdscr):
     curses.curs_set(0)
