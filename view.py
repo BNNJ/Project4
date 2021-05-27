@@ -23,6 +23,11 @@ DIRECTIONS = {
 QUIT = -1
 
 
+###############################################################################
+# Window class
+###############################################################################
+
+
 class Win:
 
     def __init__(self, h, w, y, x, *args, **kwargs):
@@ -79,6 +84,11 @@ class MenuWin(Win):
         ]
         self.infos = list(kwargs.values())
         super().__init__(h, w, y, x)
+
+    def update_infos(self, key, value):
+        options = []
+        [options.extend(p) for p in self.options]
+        self.infos[options.index(key)] = value
 
     def draw(self, page=0):
         [self.addstr(y, 1, o) for y, o in enumerate(self.options[page])]
@@ -164,6 +174,8 @@ class InputWin(Win):
         while True:
             c = self.getch()
             if c in KEY_ENTER:
+                if buff == "":
+                    buff = "0"
                 break
             elif c in KEY_BACK:
                 buff = buff[:-1]
@@ -291,7 +303,7 @@ class InputWin(Win):
 
         players = []
         while len(players) < nb_choices:
-            selected = menu.navigate()
+            selected = menu.navigate() + 1  # adjust for 1-indexed database id
             if selected in players:
                 Popup("error", "This player is already in the selected pool")\
                     .draw()
@@ -369,9 +381,9 @@ class Popup(Win):
 
     def __init__(self, *args, **kwargs):
         min_w = 29
-        max_w = 58  # maximum line length
+        max_len = 58
         self.message = [
-            args[1][i:max_w+i] for i in range(0, len(args[1]), max_w)
+            args[1][i:max_len+i] for i in range(0, len(args[1]), max_len)
         ]
         h = len(self.message) + 3
         w = max(min_w + 4, len(self.message[0]) + 4)
@@ -393,7 +405,7 @@ class Popup(Win):
         self.refresh()
 
 
-######################################################
+###############################################################################
 
 def leap_year(y):
     if y % 4 != 0:

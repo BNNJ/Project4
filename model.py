@@ -9,15 +9,14 @@ from tinydb import TinyDB, where
 
 class Player:
     def __init__(self, first_name, last_name, gender,
-                 birth_date, rank, _id=None):
+                 birth_date, rank, _id=None, **kwargs):
         self.first_name = first_name.title()
         self.last_name = last_name.title()
         self.birth_date = birth_date
         self.rank = rank
         self.gender = gender.lower()
-        self.id = _id
+        self._id = _id or len(TinyDB(TOURNAMENTS_DB).all())
         self.score = 0
-        # self.full_name = f"{self.first_name + ' ' + self.last_name:<24}"
 
     def serialize(self):
         return self.__dict__
@@ -37,53 +36,21 @@ class Player:
         self.rank = rank
 
     def __str__(self):
-        return (f"{self.id}: {self.full_name + ' ' + self.last_name:<24}"
+        return (f"{self._id}: {self.first_name + ' ' + self.last_name:<24}"
                 f" rank:{self.rank}\tscore:{self.score}")
 
     def __repr__(self):
-        return (f"{self.id}: {self.full_name}"
-                f" rank:{self.rank}\tscore:{self.score}")
+        return f"{self.first_name} {self.last_name}"
 
-
-# Player functions
 
 def new_player(first_name, last_name, gender, birth_date, rank):
     return Player(first_name, last_name, gender, birth_date, rank)
 
 
-def get_player_by_name(first_name, last_name):
-    player = TinyDB(PLAYERS_DB).get(
-        (where('first_name') == first_name.title())
-        & (where('last_name') == last_name.title())
-    )
-    if player is not None:
-        return Player(
-            player['first_name'],
-            player['last_name'],
-            player['gender'],
-            player['birth_date'],
-            player['rank'],
-            player.doc_id
-        )
-    else:
-        return None
-
-
-def get_players_by_name(names):
-    return [get_player_by_name(fn, ln) for (fn, ln) in names]
-
-
 def get_player(_id):
     player = TinyDB(PLAYERS_DB).get(doc_id=_id)
     if player is not None:
-        return Player(
-            player['first_name'],
-            player['last_name'],
-            player['gender'],
-            player['birth_date'],
-            player['rank'],
-            player.doc_id
-        )
+        return Player(**player)
 
 
 def list_players():
@@ -100,10 +67,6 @@ def list_players():
 
 def get_players(ids):
     return [get_player(i) for i in ids]
-
-
-def show_players():
-    [print(p) for p in TinyDB(PLAYERS_DB).all()]
 
 
 ###############################################################################
@@ -132,68 +95,49 @@ class Round:
 
 class Tournament:
     def __init__(self, name, location, date, players, time_format,
-                 description="", rounds_max=4, matches=[],
-                 rounds=[], score={}, _id=None):
+                 description="", rounds_max=4, rounds=[], round_started=False,
+                 current_round=1, _id=None, **kwargs):
         self.name = name
         self.location = location
         self.date = date
-        self.players = players
+        self.players = get_players(players)
         self.players_count = len(players)
         self.time_format = time_format
         self.description = description
         self.rounds_max = rounds_max
-        self.matches = matches
         self.rounds = rounds
-        self.score = score
-        self.id = _id
+        self.round_started = round_started
+        self.current_round = current_round
+        self._id = _id or len(TinyDB(TOURNAMENTS_DB).all())
+        self.previously_played = {}
 
     def serialize(self):
-        return self.__dict__
+        t = self.__dict__
+        t['players'] = [p._id for p in self.players]
+        return t
 
     def save(self):
         db = TinyDB(TOURNAMENTS_DB)
-        db.insert(self.serialize())
-        # tourney = db.get(where('name') == self.name)
-        # if tourney is None:
-        #     db.insert(self.serialize())
-        # else:
-        #     db.update(self.serialize(), doc_ids=[tourney.doc_id])
+        tourney = db.get(where('name') == self.name)
+        if tourney is None:
+            db.insert(self.serialize())
+        else:
+            db.update(self.serialize(), doc_ids=[tourney.doc_id])
 
     def update_scores(self, players):
-        self.score = {p.id: p.score for p in players}
-
-    def get_players(self):
-        players = get_players(self.players)
-        for p in players:
-            p.score = self.score[p.id]
-        return players
+        self.score = {p._id: p.score for p in players}
 
     def __str__(self):
-        return f"{self.name} ({self.id}): {self.location} on {self.date}"
+        return f"{self.name} ({self._id}): {self.location} on {self.date}"
 
     def __repr__(self):
-        return f"{self.name} ({self.id}): {self.location} on {self.date}"
+        return f"{self.name} ({self._id}): {self.location} on {self.date}"
 
 
-def new_tournament(name, location, date, players, time_format, description):
-    return Tournament(name, location, date, players, time_format, description)
-
-
-def load_tournament(id):
-    tourney = TinyDB(TOURNAMENTS_DB).get(doc_id=id)
-    return Tournament(
-        tourney['name'],
-        tourney['location'],
-        tourney['date'],
-        tourney['players'],
-        tourney['time_format'],
-        tourney['description'],
-        tourney['rounds_max'],
-        tourney['matches'],
-        tourney['rounds'],
-        tourney['score'],
-        _id=tourney.doc_id
-    )
+def load_tournament(_id):
+    tourney = TinyDB(TOURNAMENTS_DB).get(doc_id=_id)
+    if tourney is not None:
+        return Tournament(**tourney)
 
 
 def list_tournaments():

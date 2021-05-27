@@ -1,27 +1,100 @@
 #!/usr/bin/env python3
 
-# import curses
+import operator
 import model
 import view
 
-KEY_ENTER = [10, 13, 343]
 QUIT = -1
-
 
 ###############################################################################
 # TOURNAMENT MENU
 ###############################################################################
 
-TOURNAMENT_MENU = {
-    'infos': "",
-    'set match results': "Set the results for a match from the current round",
-    'save': "save the current state of the tournament",
-    'show players': "Show the players participating in the tournament",
+# possible_results = ['black', 'white', 'draw']
+SCORE_MAP = {
+    'black': [1, 0],
+    'white': [0, 1],
+    'draw': [0.5, 0.5]
 }
 
 
-def tournament_menu(h, w, tournament):
-    menu = view.MenuWin(h-8, 24, 2, 2, **TOURNAMENT_MENU)
+def swiss_sort(players, prev, score, r):
+    players = sorted(players, key=operator.attrgetter('rank'))
+    if r > 0:
+        players = sorted(players, key=operator.attrgetter('score'))
+        if players[1]._id in prev[players[0]._id]:
+            players[0], players[1] = players[1], players[0]
+    # players = [p.id for p in players]
+    pivot = len(players) // 2
+    matchups = list(zip(players[:pivot], players[pivot:]))
+    for b, w in matchups:
+        prev[b._id].append(w._id)
+        prev[w._id].append(b._id)
+    return [(b, w) for b, w in matchups]
+
+
+def finish_round(tournament):
+    pass
+    # form = [
+    #     {
+    #         'name': i,
+    #         'title': f"{w} vs {b}",
+    #         'type': "select",
+    #         'options': ["black", "white", "draw"]
+    #     } for w, b in tournament.matches
+    # ]
+    # win = view.InputWin(INFO_H, INFO_W, 2, MENU_W + 8, *form)
+    # win.draw()
+    # results = win.get_results()
+
+
+def start_round(tournament):
+    pass
+    # rnd = swiss_sort(tournament.players, )
+
+
+def save_tournament(tournament):
+    tournament.save()
+
+
+def show_players(players):
+    p = {
+        f"{p.first_name} {p.last_name}": (
+            f"rank:       {p.rank}\n"
+            f"score:      {p.score}\n"
+            f"birth date: {p.birth_date}\n"
+            f"gender:     {p.gender}"
+        )
+        for p in players
+    }
+    win = view.MenuWin(MENU_H, MENU_W, 2, 2, **p)
+    win.draw()
+    win.navigate()
+    win.clear()
+    win.refresh()
+
+
+def menu_template(tournament):
+    round_states = {
+        True: {"finish round": "finish round and assign results"},
+        False: {"start round": "start a new round"}
+    }
+    template = {
+        'infos': (
+            f"name:     {tournament.name}\n"
+            f"location: {tournament.location}\n"
+            f"date:     {tournament.date}\n"
+            f"players:  {tournament.players}"
+        ),
+        **round_states[tournament.round_started],
+        'save': "save the current state of the tournament",
+        'show players': "Show the players participating in the tournament",
+    }
+    return template
+
+
+def tournament_menu(tournament):
+    menu = view.MenuWin(MENU_H, MENU_W, 2, 2, **menu_template(tournament))
     menu.draw()
     while True:
         selected = menu.navigate()
@@ -30,11 +103,18 @@ def tournament_menu(h, w, tournament):
         elif selected == 0:
             pass
         elif selected == 1:
-            pass
+            if tournament.round_started:
+                finish_round(tournament)
+            else:
+                start_round(tournament)
+            tournament.round_started = not tournament.round_started
+            menu = view.MenuWin(MENU_H, MENU_W, 2, 2, **menu_template(tournament))
+            menu.draw()
         elif selected == 2:
-            pass
+            save_tournament(tournament)
         elif selected == 3:
-            pass
+            show_players(tournament.players)
+            menu.draw()
 
 
 ###############################################################################
@@ -59,108 +139,108 @@ MENU = {
     'show all players': "Show all players in the database",
 }
 
-TOURNAMENT_FORM = [
-    {
-        'name': "name",
-        'title': "tournament name",
-        'type': "string"
-    },
-    {
-        'name': "location",
-        'title': "location",
-        'type': "string"
-    },
-    {
-        'name': "date",
-        'title': "date",
-        'type': "date"
-    },
-    {
-        'name': "players",
-        'title': "players",
-        'type': "menu",
-        'nb_choices': 8,
-        'options': {}
-    },
-    {
-        'name': "time_format",
-        'title': "time format",
-        'type': "select",
-        'options': ["bullet", "blitz", "fast move"]
-    },
-    {
-        'name': "description",
-        'title': "description",
-        'type': "long"
-    }
-]
 
-PLAYER_FORM = [
-    {
-        'name': "first_name",
-        'title': "first name",
-        'type': "string",
-    },
-    {
-        'name': "last_name",
-        'title': "last name",
-        'type': "string",
-    },
-    {
-        'name': "gender",
-        'title': "gender",
-        'type': "select",
-        'options': ["Male", "Female"],
-    },
-    {
-        'name': "birth_date",
-        'title': "birth date",
-        'type': "date",
-    },
-    {
-        'name': "rank",
-        'title': "rank",
-        'type': "int",
-    }
-]
-
-
-def new_tournament(h, w, y, x):
-    form = TOURNAMENT_FORM
-    form[3]['options'] = model.list_players()
-    win = view.InputWin(h, w, y, x, *form)
+def new_tournament():
+    form = [
+        {
+            'name': "name",
+            'title': "tournament name",
+            'type': "string"
+        },
+        {
+            'name': "location",
+            'title': "location",
+            'type': "string"
+        },
+        {
+            'name': "date",
+            'title': "date",
+            'type': "date"
+        },
+        {
+            'name': "players",
+            'title': "players",
+            'type': "menu",
+            'nb_choices': 8,
+            'options': model.list_players()
+        },
+        {
+            'name': "time_format",
+            'title': "time format",
+            'type': "select",
+            'options': ["bullet", "blitz", "fast move"]
+        },
+        {
+            'name': "description",
+            'title': "description",
+            'type': "long"
+        }
+    ]
+    win = view.InputWin(INFO_H, INFO_W, 2, MENU_W+8, *form)
     win.draw()
     results = win.get_results()
     if win.validate(results):
-        tournament = model.new_tournament(**results)
+        tournament = model.Tournament(**results)
         tournament.save()
+        tournament = model.load_tournament(tournament._id)  # W.T.F How do I fix that ?
         view.Popup("info", "new tournament created").draw()
         return tournament
     else:
         view.Popup("info", "tournament discarded").draw()
+    win.clear()
+    win.refresh()
 
 
-def load_tournament(h):
-    tournament = list_tournaments(h)
+def load_tournament():
+    tournament = list_tournaments()
     if tournament is not None:
         return model.load_tournament(tournament)
 
 
-def list_tournaments(h):
+def list_tournaments():
     tournaments = model.list_tournaments()
     if tournaments is not None:
-        win = view.MenuWin(h, 24, 2, 2, **tournaments)
+        win = view.MenuWin(MENU_H, MENU_W, 2, 2, **tournaments)
         win.draw()
         selected = win.navigate()
         win.clear()
         win.refresh()
-        return selected
+        return selected + 1  # adjust for 1-indexed database ids
     else:
         view.Popup("info", "No tournament in the database").draw()
 
 
-def new_player(h, w, y, x):
-    win = view.InputWin(h, w, y, x, *PLAYER_FORM)
+def new_player():
+    form = [
+        {
+            'name': "first_name",
+            'title': "first name",
+            'type': "string",
+        },
+        {
+            'name': "last_name",
+            'title': "last name",
+            'type': "string",
+        },
+        {
+            'name': "gender",
+            'title': "gender",
+            'type': "select",
+            'options': ["Male", "Female"],
+        },
+        {
+            'name': "birth_date",
+            'title': "birth date",
+            'type': "date",
+        },
+        {
+            'name': "rank",
+            'title': "rank",
+            'type': "int",
+        }
+    ]
+
+    win = view.InputWin(INFO_H, INFO_W, 2, MENU_W + 8, *form)
     win.draw()
     results = win.get_results()
     if win.validate(results):
@@ -168,25 +248,33 @@ def new_player(h, w, y, x):
         view.Popup("info", "player saved").draw()
     else:
         view.Popup("info", "player discarded").draw()
+    win.clear()
+    win.refresh()
 
 
-def list_players(h):
+def list_players():
     players = model.list_players()
     if players is not None:
-        win = view.MenuWin(h, 24, 2, 2, **players)
+        win = view.MenuWin(MENU_H, MENU_W, 2, 2, **players)
         win.draw()
         selected = win.navigate()
         win.clear()
         win.refresh()
-        return selected
+        return selected + 1  # adjust for 1-indexed database id
     else:
         view.Popup("info", "No players in the database").draw()
 
 
 def controller(stdscr):
     view.init(stdscr)
-    h, w = stdscr.getmaxyx()
-    menu = view.MenuWin(h-8, 24, 2, 2, **MENU)
+    global H, W, MENU_H, MENU_W, INFO_H, INFO_W
+    H, W = stdscr.getmaxyx()
+    MENU_H = H - 8
+    MENU_W = 24
+    INFO_H = MENU_H
+    INFO_W = W - (MENU_W + 12)
+
+    menu = view.MenuWin(MENU_H, MENU_W, 2, 2, **MENU)
     tournament = None
     while True:
         menu.draw()
@@ -197,25 +285,21 @@ def controller(stdscr):
         elif selected == 0:
             if tournament is not None:
                 menu.clear()
-                tournament_menu(h, w, tournament)
+                tournament_menu(tournament)
             else:
                 view.Popup("info", "No tournament selected,"
                            "load one from the database or start a new one")\
                     .draw()
         elif selected == 1:
-            tournament = new_tournament(h-8, w-36, 2, 32)
+            tournament = new_tournament()
         elif selected == 2:
-            tournament = load_tournament(h-8)
+            tournament = load_tournament()
         elif selected == 3:
-            list_tournaments(h-8)
+            list_tournaments()
         elif selected == 4:
-            new_player(h-8, w-36, 2, 32)
+            new_player()
         elif selected == 5:
-            list_players(h-8)
-        elif selected == 6:
-            pass
-        elif selected == 7:
-            view.Popup("bla", "HELLO").draw()
+            list_players()
     view.stop()
 
 

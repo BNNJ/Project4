@@ -5,29 +5,6 @@ import argparse
 from controller import start
 
 
-# import operator
-# def swiss_sort(players, prev, score, r):
-#     players = sorted(players, key=operator.attrgetter('rank'))
-#     if r > 0:
-#         players = sorted(players, key=operator.attrgetter('score'))
-#         if players[1].id in prev[players[0].id]:
-#             players[0], players[1] = players[1], players[0]
-#     # players = [p.id for p in players]
-#     pivot = len(players) // 2
-#     matchups = list(zip(players[:pivot], players[pivot:]))
-#     for b, w in matchups:
-#         prev[b.id].append(w.id)
-#         prev[w.id].append(b.id)
-#     return [Match(b, w) for b, w in matchups]
-
-possible_results = ['black', 'white', 'draw']
-SCORE_MAP = {
-    'black': [1, 0],
-    'white': [0, 1],
-    'draw': [0.5, 0.5]
-}
-
-
 def parse_args():
     argp = argparse.ArgumentParser(description="Chess tournament organizer")
 
