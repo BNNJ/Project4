@@ -5,7 +5,6 @@ import curses
 import curses.textpad
 
 
-
 KEY_ENTER = [10, 13, 343]
 KEY_QUIT = ord('q')
 KEY_UP = curses.KEY_UP
@@ -22,6 +21,7 @@ DIRECTIONS = {
 }
 
 QUIT = -1
+
 
 class Win:
 
@@ -97,7 +97,7 @@ class MenuWin(Win):
         y = self.y
         x = self.w + 8
         infowin = InfoWin(h, w, y, x, *self.infos)
-        infowin.draw(self.selected) 
+        infowin.draw(self.selected)
         self.highlight_on(self.selected, 0, self.w)
         page = 0
         page_max = len(self.options) - 1
@@ -127,6 +127,7 @@ class MenuWin(Win):
                 self.highlight_off(self.selected, 0, self.w)
                 self.refresh()
                 return self.selected + page*(self.max_lines)
+
 
 class InfoWin(Win):
 
@@ -177,7 +178,6 @@ class InputWin(Win):
                 x += 1
         curses.curs_set(0)
         return buff
-
 
     def date_field(self, y, title, data):
         curses.textpad.rectangle(self.win, y, 0, y + 2, 13)
@@ -271,7 +271,6 @@ class InputWin(Win):
     def get_selection(self, y, *options):
         selected = 0
         nb_opt = len(options)
-        players = []
         self.highlight_on(y + 1, 1, 31)
         while True:
             c = self.win.getch()
@@ -294,10 +293,12 @@ class InputWin(Win):
         while len(players) < nb_choices:
             selected = menu.navigate()
             if selected in players:
-                Popup("error", "This player is already in the selected pool").draw()
+                Popup("error", "This player is already in the selected pool")\
+                    .draw()
             else:
                 players.append(selected)
-                Popup("info", f"{len(players)}/{nb_choices} players selected").draw()
+                Popup("info", f"{len(players)}/{nb_choices} players selected")\
+                    .draw()
 
         menu.clear()
         menu.refresh()
@@ -310,10 +311,12 @@ class InputWin(Win):
         y = 0
         for f in self.args:
             if f['type'] in ["string", "int"]:
-                self.input_field(y, f['title'], self.results.get(f['name'], ""))
+                self.input_field(y, f['title'], self.results.get(f['name'],
+                                                                 ""))
                 y += 4
             elif f['type'] == "date":
-                self.date_field(y, f['title'], self.results.get(f['name'], "  /  /    "))
+                self.date_field(y, f['title'], self.results.get(f['name'],
+                                                                "  /  /    "))
                 y += 4
             elif f['type'] == "long":
                 self.long_field(y, f['title'], self.results.get(f['name'], ""))
@@ -345,7 +348,8 @@ class InputWin(Win):
                 self.results[f['name']] = self.get_selection(y, *f['options'])
                 y += len(f['options']) + 3
             elif f['type'] == "menu":
-                self.results[f['name']] = self.get_menu(y, f['nb_choices'], **f['options'])
+                self.results[f['name']] = self.get_menu(y, f['nb_choices'],
+                                                        **f['options'])
                 y += 4
         return self.results
 
@@ -365,8 +369,10 @@ class Popup(Win):
 
     def __init__(self, *args, **kwargs):
         min_w = 29
-        max_w = 58 #maximum line length
-        self.message = [args[1][i:max_w+i] for i in range(0, len(args[1]), max_w)]
+        max_w = 58  # maximum line length
+        self.message = [
+            args[1][i:max_w+i] for i in range(0, len(args[1]), max_w)
+        ]
         h = len(self.message) + 3
         w = max(min_w + 4, len(self.message[0]) + 4)
         y = curses.LINES // 2 - h // 2
@@ -399,12 +405,13 @@ def leap_year(y):
     else:
         return True
 
+
 def date_is_valid(d):
     day = int(d[:2])
     month = int(d[2:4])
     year = int(d[4:8])
 
-    if (len(d) != 8)
+    if (len(d) != 8):
         return False
     elif (month <= 0) or (month > 12):
         return False
@@ -419,6 +426,7 @@ def date_is_valid(d):
     else:
         return True
 
+
 def init(stdscr):
     curses.curs_set(0)
     stdscr.keypad(1)
@@ -432,7 +440,3 @@ def start(func):
 
 def stop():
     curses.curs_set(1)
-
-
-if __name__ == "__main__":
-    curses.wrapper(main)

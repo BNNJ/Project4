@@ -1,11 +1,46 @@
 #!/usr/bin/env python3
 
-import curses
+# import curses
 import model
 import view
 
 KEY_ENTER = [10, 13, 343]
 QUIT = -1
+
+
+###############################################################################
+# TOURNAMENT MENU
+###############################################################################
+
+TOURNAMENT_MENU = {
+    'infos': "",
+    'set match results': "Set the results for a match from the current round",
+    'save': "save the current state of the tournament",
+    'show players': "Show the players participating in the tournament",
+}
+
+
+def tournament_menu(h, w, tournament):
+    menu = view.MenuWin(h-8, 24, 2, 2, **TOURNAMENT_MENU)
+    menu.draw()
+    while True:
+        selected = menu.navigate()
+        if selected == QUIT:
+            break
+        elif selected == 0:
+            pass
+        elif selected == 1:
+            pass
+        elif selected == 2:
+            pass
+        elif selected == 3:
+            pass
+
+
+###############################################################################
+# MAIN MENU
+###############################################################################
+
 MENU = {
     'current tournament': (
         "More options for the current tournament:\n"
@@ -22,15 +57,6 @@ MENU = {
     'tournament list': "Display the list of tournaments in the database",
     'add a player': "Add a new player to the database",
     'show all players': "Show all players in the database",
-    'form test': "Test form",
-    'popup test': "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", 
-    'line test': "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. \n Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", 
-}
-
-TOURNAMENT_MENU = {
-    'set match results': "Set the results for a match from the current round",
-    'save': "save the current state of the tournament",
-    'show players': "Show the players participating in the tournament",
 }
 
 TOURNAMENT_FORM = [
@@ -99,31 +125,6 @@ PLAYER_FORM = [
 ]
 
 
-TEST_FORM = [
-    {
-        'name': "test",
-        'title': "test",
-        'type': "date",
-    }
-]
-
-def tournament_menu(h, w):
-    menu = view.MenuWin(h-8, 24, 2, 2, **TOURNAMENT_MENU)
-    menu.draw()
-    while True:
-        selected = menu.navigate()
-        if selected == QUIT:
-            break
-        elif selected == 0:
-            pass
-        elif selected == 1:
-            pass
-        elif selected == 2:
-            pass
-        elif selected == 3:
-            pass
-
-
 def new_tournament(h, w, y, x):
     form = TOURNAMENT_FORM
     form[3]['options'] = model.list_players()
@@ -141,15 +142,21 @@ def new_tournament(h, w, y, x):
 
 def load_tournament(h):
     tournament = list_tournaments(h)
-    return model.load_tournament(tournament)
+    if tournament is not None:
+        return model.load_tournament(tournament)
+
 
 def list_tournaments(h):
-    win = view.MenuWin(h, 24, 2, 2, **model.list_tournaments())
-    win.draw()
-    selected = win.navigate()
-    win.clear()
-    win.refresh()
-    return selected
+    tournaments = model.list_tournaments()
+    if tournaments is not None:
+        win = view.MenuWin(h, 24, 2, 2, **tournaments)
+        win.draw()
+        selected = win.navigate()
+        win.clear()
+        win.refresh()
+        return selected
+    else:
+        view.Popup("info", "No tournament in the database").draw()
 
 
 def new_player(h, w, y, x):
@@ -164,11 +171,16 @@ def new_player(h, w, y, x):
 
 
 def list_players(h):
-    win = view.MenuWin(h, 24, 2, 2, **model.list_players())
-    win.draw()
-    win.navigate()
-    win.clear()
-    win.refresh()
+    players = model.list_players()
+    if players is not None:
+        win = view.MenuWin(h, 24, 2, 2, **players)
+        win.draw()
+        selected = win.navigate()
+        win.clear()
+        win.refresh()
+        return selected
+    else:
+        view.Popup("info", "No players in the database").draw()
 
 
 def controller(stdscr):
@@ -183,8 +195,13 @@ def controller(stdscr):
         if selected == QUIT:
             break
         elif selected == 0:
-            menu.clear()
-            tournament_menu(h, w)
+            if tournament is not None:
+                menu.clear()
+                tournament_menu(h, w, tournament)
+            else:
+                view.Popup("info", "No tournament selected,"
+                           "load one from the database or start a new one")\
+                    .draw()
         elif selected == 1:
             tournament = new_tournament(h-8, w-36, 2, 32)
         elif selected == 2:
@@ -202,6 +219,7 @@ def controller(stdscr):
     view.stop()
 
 
-def start():
+def start(players_db, tournaments_db):
+    model.start(players_db, tournaments_db)
     view.start(controller)
     # print(type(model.list_players()))

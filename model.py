@@ -1,19 +1,6 @@
 #!/usr/bin/env python3
 
 from tinydb import TinyDB, where
-from enum import Enum
-
-
-# class Gender(Enum):
-#     UNKNOWN = 0
-#     MALE = 1
-#     FEMALE = 2
-
-
-# class TimeFormat(Enum):
-#     BLITZ = 0
-#     BULLET = 1
-#     FAST = 2
 
 
 ###############################################################################
@@ -36,7 +23,7 @@ class Player:
         return self.__dict__
 
     def save(self):
-        db = TinyDB('players.json')
+        db = TinyDB(PLAYERS_DB)
         player = db.get(
             (where('first_name') == self.first_name)
             & (where('last_name') == self.last_name)
@@ -65,7 +52,7 @@ def new_player(first_name, last_name, gender, birth_date, rank):
 
 
 def get_player_by_name(first_name, last_name):
-    player = TinyDB('players.json').get(
+    player = TinyDB(PLAYERS_DB).get(
         (where('first_name') == first_name.title())
         & (where('last_name') == last_name.title())
     )
@@ -87,7 +74,7 @@ def get_players_by_name(names):
 
 
 def get_player(_id):
-    player = TinyDB('players.json').get(doc_id=_id)
+    player = TinyDB(PLAYERS_DB).get(doc_id=_id)
     if player is not None:
         return Player(
             player['first_name'],
@@ -97,18 +84,18 @@ def get_player(_id):
             player['rank'],
             player.doc_id
         )
-    else:
-        return None
 
 
 def list_players():
-    return {
-        f"{str(p.doc_id):<3}: {p['first_name']} {p['last_name']}": (
-            f"gender:     {p['gender']}\n"
-            f"birth_date: {p['birth_date']}\n"
-            f"rank:       {p['rank']}"
-        ) for p in TinyDB('players.json').all()
-    }
+    players = TinyDB(PLAYERS_DB).all()
+    if len(players) > 0:
+        return {
+            f"{str(p.doc_id):<3}: {p['first_name']} {p['last_name']}": (
+                f"gender:     {p['gender']}\n"
+                f"birth_date: {p['birth_date']}\n"
+                f"rank:       {p['rank']}"
+            ) for p in players
+        }
 
 
 def get_players(ids):
@@ -116,7 +103,7 @@ def get_players(ids):
 
 
 def show_players():
-    [print(p) for p in TinyDB('players.json').all()]
+    [print(p) for p in TinyDB(PLAYERS_DB).all()]
 
 
 ###############################################################################
@@ -164,7 +151,7 @@ class Tournament:
         return self.__dict__
 
     def save(self):
-        db = TinyDB('tournaments.json')
+        db = TinyDB(TOURNAMENTS_DB)
         db.insert(self.serialize())
         # tourney = db.get(where('name') == self.name)
         # if tourney is None:
@@ -193,7 +180,7 @@ def new_tournament(name, location, date, players, time_format, description):
 
 
 def load_tournament(id):
-    tourney = TinyDB('tournaments.json').get(doc_id=id)
+    tourney = TinyDB(TOURNAMENTS_DB).get(doc_id=id)
     return Tournament(
         tourney['name'],
         tourney['location'],
@@ -210,17 +197,27 @@ def load_tournament(id):
 
 
 def list_tournaments():
-    return {
-        t['name']: (
-            f"location:    {t['location']}\n"
-            f"date:        {t['date']}\n"
-            f"players:     {t['players']}\n"
-            f"time format: {t['time_format']}\n"
-            f"description: {t['description']}\n"
-        ) for t in TinyDB('tournaments.json').all()
-    }
+    tournaments = TinyDB(TOURNAMENTS_DB).all()
+    if len(tournaments) > 0:
+        return {
+            t['name']: (
+                f"location:    {t['location']}\n"
+                f"date:        {t['date']}\n"
+                f"players:     {t['players']}\n"
+                f"time format: {t['time_format']}\n"
+                f"description: {t['description']}\n"
+            ) for t in tournaments
+        }
 
 ###############################################################################
 
+
 def clear_table(table):
     TinyDB(table).truncate()
+
+
+def start(players_db, tournaments_db):
+    global PLAYERS_DB
+    PLAYERS_DB = players_db
+    global TOURNAMENTS_DB
+    TOURNAMENTS_DB = tournaments_db
