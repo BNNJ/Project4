@@ -15,7 +15,7 @@ class Player:
         self.birth_date = birth_date
         self.rank = rank
         self.gender = gender.lower()
-        self._id = _id or len(TinyDB(TOURNAMENTS_DB).all())
+        self._id = _id or len(TinyDB(TOURNAMENTS_DB).all()) + 1
         self.score = 0
 
     def serialize(self):
@@ -66,6 +66,8 @@ def list_players():
 
 
 def get_players(ids):
+    with open('log2.txt', 'a') as f:
+        f.write(f"{ids}\n")
     return [get_player(i) for i in ids]
 
 
@@ -97,6 +99,9 @@ class Tournament:
     def __init__(self, name, location, date, players, time_format,
                  description="", rounds_max=4, rounds=[], round_started=False,
                  current_round=1, _id=None, **kwargs):
+
+        with open('log.txt', 'a') as f:
+            f.write(f"\n{players}   TYPE:{type(players)}")
         self.name = name
         self.location = location
         self.date = date
@@ -108,7 +113,7 @@ class Tournament:
         self.rounds = rounds
         self.round_started = round_started
         self.current_round = current_round
-        self._id = _id or len(TinyDB(TOURNAMENTS_DB).all())
+        self._id = _id or len(TinyDB(TOURNAMENTS_DB).all()) + 1
         self.previously_played = {}
 
     def serialize(self):
