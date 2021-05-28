@@ -2,6 +2,11 @@
 
 Chess tournament organizer with a curses TUI
 
+## todo
+
+fix index out of range issue on rounds when loading tournament
+figure out why scores don't update
+
 ## setup
 
 First clone the repo :
