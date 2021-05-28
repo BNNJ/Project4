@@ -5,7 +5,10 @@ Chess tournament organizer with a curses TUI
 ## todo
 
 Make windows req.txt, make sure everything works there
+	- display bugs all over the place
+	- match bug : all matches are player1 vs player1
 
+fix empty date bug
 
 ## setup
 
