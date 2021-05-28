@@ -4,6 +4,7 @@ import operator
 from tinydb import TinyDB, where
 from datetime import datetime
 
+
 ###############################################################################
 # PLAYER
 ###############################################################################
@@ -86,8 +87,10 @@ class Match:
     }
 
     def __init__(self, white, black, result=None):
-        self.white = get_player(white[0])
-        self.black = get_player(black[0])
+        # self.white = get_player(white[0])
+        # self.black = get_player(black[0])
+        self.white = PLAYERS[white[0]]
+        self.black = PLAYERS[black[0]]
         self.white_score = white[1]
         self.black_score = black[1]
 
@@ -139,11 +142,13 @@ class Round:
 class Tournament:
     def __init__(self, name, location, date, players, time_format,
                  description="", max_round=4, rounds=[], round_started=False,
-                 round_nb=0, _id=None, previously_played=None, score=None):
+                 round_nb=0, _id=None, previously_played={}, score={}):
         self.name = name
         self.location = location
         self.date = date
         self.players = get_players(players)
+        global PLAYERS
+        PLAYERS = {p._id: p for p in self.players}
         self.players_count = len(players)
         self.time_format = time_format
         self.description = description
@@ -153,8 +158,8 @@ class Tournament:
         self.round_started = round_started
         self.current_round = None if round_nb == 0 else self.rounds[round_nb-1]
         self._id = _id or len(TinyDB(TOURNAMENTS_DB)) + 1
-        self.previously_played = previously_played or {i: [] for i in players}
-        self.score = score or {i: 0 for i in players}
+        self.previously_played = previously_played
+        self.score = score
 
     def end(self):
         pass
@@ -218,7 +223,7 @@ class Tournament:
         if self.round_nb > 0:
             players = sorted(players, key=operator.attrgetter('score'))
             players = [p._id for p in players]
-            if players[1] in self.previously_played[players[0]]:
+            if players[1] in self.previously_played.get(players[0], []):
                 players[0], players[1] = players[1], players[0]
             matchups = [
                 (players[0], players[1]),
@@ -231,8 +236,8 @@ class Tournament:
             pivot = len(players) // 2
             matchups = list(zip(players[:pivot], players[pivot:]))
         for w, b in matchups:
-            self.previously_played[w].append(b)
-            self.previously_played[b].append(w)
+            self.previously_played.setdefault(w, []).append(b)
+            self.previously_played.setdefault(b, []).append(w)
         return matchups
 
     def __str__(self):

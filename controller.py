@@ -32,23 +32,20 @@ def finish_round(tournament):
 
 def start_round(tournament):
     tournament.start_round()
-    pass
-    # rnd = swiss_sort(tournament.players, )
 
 
 def save_tournament(tournament):
     tournament.save()
 
 
-def show_players(players):
+def show_players(tournament):
     p = {
         f"{p.first_name} {p.last_name}": (
             f"rank:       {p.rank}\n"
             f"score:      {p.score}\n"
             f"birth date: {p.birth_date}\n"
             f"gender:     {p.gender}"
-        )
-        for p in players
+        ) for p in tournament.players
     }
     win = view.MenuWin(MENU_H, MENU_W, 2, 2, **p)
     win.draw()
@@ -64,10 +61,11 @@ def menu_template(tournament):
     }
     template = {
         'infos': (
-            f"name:     {tournament.name}\n"
-            f"location: {tournament.location}\n"
-            f"date:     {tournament.date}\n"
-            f"players:  {tournament.players}"
+            f"name:          {tournament.name}\n"
+            f"location:      {tournament.location}\n"
+            f"current round: {tournament.round_nb}\n"
+            f"date:          {tournament.date}\n"
+            f"players:       {tournament.players}"
         ),
         **round_states[tournament.round_started],
         'save': "save the current state of the tournament",
@@ -96,7 +94,7 @@ def tournament_menu(tournament):
         elif selected == 2:
             save_tournament(tournament)
         elif selected == 3:
-            show_players(tournament.players)
+            show_players(tournament)
             menu.draw()
 
 
