@@ -4,8 +4,8 @@ Chess tournament organizer with a curses TUI
 
 ## todo
 
-fix index out of range issue on rounds when loading tournament
-figure out why scores don't update
+Make windows req.txt, make sure everything works there
+
 
 ## setup
 
@@ -44,10 +44,10 @@ pip install -r requirement.txt
 
 ## arguments
 
-argument       | effect
----------------|-------
--h, --help     | show help message and exit
--d, --debug    | enable debug logs
--q, --quiet    | silence the info logs
+argument            | effect
+--------------------|-------
+-h, --help          | show help message and exit
+-t, --tournaments T | specify tournaments database
+-p, --players P     | specify players database
 
 ## examples
