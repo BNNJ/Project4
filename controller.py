@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import operator
 import model
 import view
 
@@ -10,45 +9,29 @@ QUIT = -1
 # TOURNAMENT MENU
 ###############################################################################
 
-# possible_results = ['black', 'white', 'draw']
-SCORE_MAP = {
-    'black': [1, 0],
-    'white': [0, 1],
-    'draw': [0.5, 0.5]
-}
-
-
-def swiss_sort(players, prev, score, r):
-    players = sorted(players, key=operator.attrgetter('rank'))
-    if r > 0:
-        players = sorted(players, key=operator.attrgetter('score'))
-        if players[1]._id in prev[players[0]._id]:
-            players[0], players[1] = players[1], players[0]
-    # players = [p.id for p in players]
-    pivot = len(players) // 2
-    matchups = list(zip(players[:pivot], players[pivot:]))
-    for b, w in matchups:
-        prev[b._id].append(w._id)
-        prev[w._id].append(b._id)
-    return [(b, w) for b, w in matchups]
-
 
 def finish_round(tournament):
-    pass
-    # form = [
-    #     {
-    #         'name': i,
-    #         'title': f"{w} vs {b}",
-    #         'type': "select",
-    #         'options': ["black", "white", "draw"]
-    #     } for w, b in tournament.matches
-    # ]
-    # win = view.InputWin(INFO_H, INFO_W, 2, MENU_W + 8, *form)
-    # win.draw()
-    # results = win.get_results()
+    form = [
+        {
+            'name': i,
+            'title': f"{m.white._id} vs {m.black._id}",
+            'type': "select",
+            'options': ["black", "white", "draw"]
+        } for i, m in enumerate(tournament.current_round.matches)
+    ]
+    win = view.InputWin(INFO_H, INFO_W, 2, MENU_W + 8, *form)
+    win.draw()
+    results = win.get_results()
+    if win.validate(results):
+        results = list(results.values())
+        tournament.end_round(results)
+        view.Popup("info", "round finished, scores registered")
+    else:
+        view.Popup("info", "scores discarded")
 
 
 def start_round(tournament):
+    tournament.start_round()
     pass
     # rnd = swiss_sort(tournament.players, )
 
@@ -107,8 +90,8 @@ def tournament_menu(tournament):
                 finish_round(tournament)
             else:
                 start_round(tournament)
-            tournament.round_started = not tournament.round_started
-            menu = view.MenuWin(MENU_H, MENU_W, 2, 2, **menu_template(tournament))
+            menu = view.MenuWin(MENU_H, MENU_W, 2, 2,
+                                **menu_template(tournament))
             menu.draw()
         elif selected == 2:
             save_tournament(tournament)
@@ -182,7 +165,6 @@ def new_tournament():
     if win.validate(results):
         tournament = model.Tournament(**results)
         tournament.save()
-        tournament = model.load_tournament(tournament._id)  # W.T.F How do I fix that ?
         view.Popup("info", "new tournament created").draw()
         return tournament
     else:
@@ -306,4 +288,3 @@ def controller(stdscr):
 def start(players_db, tournaments_db):
     model.start(players_db, tournaments_db)
     view.start(controller)
-    # print(type(model.list_players()))

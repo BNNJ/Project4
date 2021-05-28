@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
+import operator
 from tinydb import TinyDB, where
-
+from datetime import datetime
 
 ###############################################################################
 # PLAYER
 ###############################################################################
+
 
 class Player:
     def __init__(self, first_name, last_name, gender,
@@ -76,32 +78,69 @@ def get_players(ids):
 ###############################################################################
 
 class Match:
-    def __init__(self, black, white, result=None):
-        self.black = black
-        self.white = white
-        self.result = result
+
+    SCORE_MAP = {
+        'white': [1, 0],
+        'black': [0, 1],
+        'draw': [0.5, 0.5]
+    }
+
+    def __init__(self, white_id, black_id,
+                 white_score=0, black_score=0, result=None):
+        self.white = get_player(white_id)
+        self.black = get_player(black_id)
+        self.white_score = white_score
+        self.black_score = black_score
+
+    def set_score(self, result):
+        self.white_score = self.SCORE_MAP[result][0]
+        self.black_score = self.SCORE_MAP[result][1]
+
+    def serialize(self):
+        return {
+            'white': self.white._id,
+            'black': self.black._id,
+            'black_score': self.black_score,
+            'white_score': self.white_score
+        }
 
 
 ###############################################################################
 # ROUND
 ###############################################################################
 
-class Round:
-    def __init__(self, matches=[]):
-        self.matches = matches
 
+class Round:
+    def __init__(self, name, matches=[], start_time=None, end_time=None):
+        self.name = name
+        self.matches = [Match(m[0], m[1]) for m in matches]
+        self.start_time = start_time
+        self.end_time = end_time
+
+    def start(self):
+        self.start_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+
+    def end(self, results):
+        self.end_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+        [m.set_score(results[i]) for i, m in enumerate(self.matches)]
+
+    def serialize(self):
+        return {
+            'name': self.name,
+            'matches': [m.serialize() for m in self.matches],
+            'start_time': self.start_time,
+            'end_time': self.end_time
+        }
 
 ###############################################################################
 # TOURNAMENT
 ###############################################################################
 
+
 class Tournament:
     def __init__(self, name, location, date, players, time_format,
-                 description="", rounds_max=4, rounds=[], round_started=False,
-                 current_round=1, _id=None, **kwargs):
-
-        with open('log.txt', 'a') as f:
-            f.write(f"\n{players}   TYPE:{type(players)}")
+                 description="", max_round=4, rounds=[], round_started=False,
+                 round_nb=0, _id=None, previously_played=None, **kwargs):
         self.name = name
         self.location = location
         self.date = date
@@ -109,28 +148,67 @@ class Tournament:
         self.players_count = len(players)
         self.time_format = time_format
         self.description = description
-        self.rounds_max = rounds_max
         self.rounds = rounds
+        self.max_round = max_round
+        self.round_nb = round_nb
         self.round_started = round_started
-        self.current_round = current_round
+        self.current_round = None if round_nb == 0 else self.rounds[round_nb]
         self._id = _id or len(TinyDB(TOURNAMENTS_DB).all()) + 1
-        self.previously_played = {}
+        self.previously_played = previously_played or {i: [] for i in players}
+
+    def end(self):
+        pass
+
+    def start_round(self):
+        if self.round_nb < self.max_round:
+            self.round_started = True
+            self.rounds.append(self.swiss_sort())
+            self.current_round = self.rounds[self.round_nb]
+            self.current_round.start()
+        else:
+            self.end()
+
+    def end_round(self, results):
+        self.round_started = False
+        self.current_round.end(results)
+        if self.round_nb == self.max_round:
+            self.end()
+        self.round_nb += 1
 
     def serialize(self):
-        t = self.__dict__
+        t = dict(self.__dict__)
         t['players'] = [p._id for p in self.players]
+        t['rounds'] = [r.serialize() for r in self.rounds]
         return t
 
     def save(self):
         db = TinyDB(TOURNAMENTS_DB)
-        tourney = db.get(where('name') == self.name)
-        if tourney is None:
+        tournament = db.get(where('name') == self.name)
+        if tournament is None:
             db.insert(self.serialize())
         else:
-            db.update(self.serialize(), doc_ids=[tourney.doc_id])
+            db.update(self.serialize(), doc_ids=[tournament.doc_id])
 
-    def update_scores(self, players):
-        self.score = {p._id: p.score for p in players}
+    def swiss_sort(self):
+        players = sorted(self.players, key=operator.attrgetter('rank'))
+        if self.round_nb > 0:
+            players = sorted(players, key=operator.attrgetter('score'))
+            players = [p._id for p in players]
+            if players[1] in self.previously_played[players[0]]:
+                players[0], players[1] = players[1], players[0]
+            matches = [
+                (players[0], players[1]),
+                (players[2], players[3]),
+                (players[4], players[5])
+            ]
+        else:
+            players = [p._id for p in players]
+            pivot = len(players) // 2
+            matches = list(zip(players[:pivot], players[pivot:]))
+        for w, b in matches:
+            self.previously_played[w].append(b)
+            self.previously_played[b].append(w)
+        return Round(f"round{self.round_nb}", matches)
 
     def __str__(self):
         return f"{self.name} ({self._id}): {self.location} on {self.date}"
@@ -140,9 +218,9 @@ class Tournament:
 
 
 def load_tournament(_id):
-    tourney = TinyDB(TOURNAMENTS_DB).get(doc_id=_id)
-    if tourney is not None:
-        return Tournament(**tourney)
+    tournament = TinyDB(TOURNAMENTS_DB).get(doc_id=_id)
+    if tournament is not None:
+        return Tournament(**tournament)
 
 
 def list_tournaments():
