@@ -17,7 +17,7 @@ class Player:
         self.birth_date = birth_date
         self.rank = rank
         self.gender = gender.lower()
-        self._id = _id or len(TinyDB(TOURNAMENTS_DB).all()) + 1
+        self._id = _id or len(TinyDB(TOURNAMENTS_DB)) + 1
         self.score = 0
 
     def serialize(self):
@@ -85,24 +85,23 @@ class Match:
         'draw': [0.5, 0.5]
     }
 
-    def __init__(self, white_id, black_id,
-                 white_score=0, black_score=0, result=None):
-        self.white = get_player(white_id)
-        self.black = get_player(black_id)
-        self.white_score = white_score
-        self.black_score = black_score
+    def __init__(self, white, black, result=None):
+        self.white = get_player(white[0])
+        self.black = get_player(black[0])
+        self.white_score = white[1]
+        self.black_score = black[1]
 
     def set_score(self, result):
         self.white_score = self.SCORE_MAP[result][0]
         self.black_score = self.SCORE_MAP[result][1]
+        self.white.score += self.white_score
+        self.black.score += self.black_score
 
     def serialize(self):
-        return {
-            'white': self.white._id,
-            'black': self.black._id,
-            'black_score': self.black_score,
-            'white_score': self.white_score
-        }
+        return (
+            [self.white._id, self.white_score],
+            [self.black._id, self.black_score],
+        )
 
 
 ###############################################################################
@@ -140,7 +139,7 @@ class Round:
 class Tournament:
     def __init__(self, name, location, date, players, time_format,
                  description="", max_round=4, rounds=[], round_started=False,
-                 round_nb=0, _id=None, previously_played=None, **kwargs):
+                 round_nb=0, _id=None, previously_played=None, score=None):
         self.name = name
         self.location = location
         self.date = date
@@ -148,13 +147,14 @@ class Tournament:
         self.players_count = len(players)
         self.time_format = time_format
         self.description = description
-        self.rounds = rounds
+        self.rounds = [Round(**r) for r in rounds]
         self.max_round = max_round
         self.round_nb = round_nb
         self.round_started = round_started
         self.current_round = None if round_nb == 0 else self.rounds[round_nb]
-        self._id = _id or len(TinyDB(TOURNAMENTS_DB).all()) + 1
+        self._id = _id or len(TinyDB(TOURNAMENTS_DB)) + 1
         self.previously_played = previously_played or {i: [] for i in players}
+        self.score = score or {i: 0 for i in players}
 
     def end(self):
         pass
@@ -162,32 +162,56 @@ class Tournament:
     def start_round(self):
         if self.round_nb < self.max_round:
             self.round_started = True
-            self.rounds.append(self.swiss_sort())
+            matchups = self.swiss_sort()
+            matches = [([m[0], 0], [m[1], 0]) for m in matchups]
+            r = Round(f"round{self.round_nb}", matches)
+            self.rounds.append(r)
             self.current_round = self.rounds[self.round_nb]
             self.current_round.start()
+            self.round_nb += 1
         else:
             self.end()
 
     def end_round(self, results):
         self.round_started = False
-        self.current_round.end(results)
         if self.round_nb == self.max_round:
             self.end()
-        self.round_nb += 1
+        else:
+            self.current_round.end(results)
+            for p in self.players:
+                self.score[p._id] = p.score
 
     def serialize(self):
-        t = dict(self.__dict__)
-        t['players'] = [p._id for p in self.players]
-        t['rounds'] = [r.serialize() for r in self.rounds]
-        return t
+        # t = dict(self.__dict__)
+        # t['players'] = [p._id for p in self.players]
+        # t['rounds'] = [r.serialize() for r in self.rounds]
+        # del t['current_round']
+        # del t['players_count']
+        # return t
+        return {
+            'name': self.name,
+            'location': self.location,
+            'date': self.date,
+            'players': [p._id for p in self.players],
+            'time_format': self.time_format,
+            'description': self.description,
+            'rounds': [r.serialize() for r in self.rounds],
+            'max_round': self.max_round,
+            'round_nb': self.round_nb,
+            'round_started': self.round_started,
+            'previously_played': self.previously_played,
+            '_id': self._id,
+            'score': self.score
+        }
 
     def save(self):
         db = TinyDB(TOURNAMENTS_DB)
-        tournament = db.get(where('name') == self.name)
-        if tournament is None:
-            db.insert(self.serialize())
-        else:
-            db.update(self.serialize(), doc_ids=[tournament.doc_id])
+        db.upsert(self.serialize(), where('_id') == self._id)
+        # tournament = db.get(where('name') == self.name)
+        # if tournament is None:
+        #     db.insert(self.serialize())
+        # else:
+        #     db.update(self.serialize(), doc_ids=[tournament.doc_id])
 
     def swiss_sort(self):
         players = sorted(self.players, key=operator.attrgetter('rank'))
@@ -196,19 +220,20 @@ class Tournament:
             players = [p._id for p in players]
             if players[1] in self.previously_played[players[0]]:
                 players[0], players[1] = players[1], players[0]
-            matches = [
+            matchups = [
                 (players[0], players[1]),
                 (players[2], players[3]),
-                (players[4], players[5])
+                (players[4], players[5]),
+                (players[6], players[7])
             ]
         else:
             players = [p._id for p in players]
             pivot = len(players) // 2
-            matches = list(zip(players[:pivot], players[pivot:]))
-        for w, b in matches:
+            matchups = list(zip(players[:pivot], players[pivot:]))
+        for w, b in matchups:
             self.previously_played[w].append(b)
             self.previously_played[b].append(w)
-        return Round(f"round{self.round_nb}", matches)
+        return matchups
 
     def __str__(self):
         return f"{self.name} ({self._id}): {self.location} on {self.date}"
