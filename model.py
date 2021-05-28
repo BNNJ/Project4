@@ -151,7 +151,7 @@ class Tournament:
         self.max_round = max_round
         self.round_nb = round_nb
         self.round_started = round_started
-        self.current_round = None if round_nb == 0 else self.rounds[round_nb]
+        self.current_round = None if round_nb == 0 else self.rounds[round_nb-1]
         self._id = _id or len(TinyDB(TOURNAMENTS_DB)) + 1
         self.previously_played = previously_played or {i: [] for i in players}
         self.score = score or {i: 0 for i in players}
