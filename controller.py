@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import operator
 import model
 import view
 
@@ -56,15 +57,32 @@ def save_tournament(tournament):
 
 
 def show_players(tournament):
-    p = {
+    form = [
+        {
+            'name': "sort_method",
+            'title': "sort method",
+            'type': "select",
+            'options': ["alpha", "rank", "id"]
+        }
+    ]
+    win = view.InputWin(INFO_H, INFO_W, 2, MENU_W+8, *form)
+    win.draw()
+
+    if win.get_results()['sort_method'] == "rank":
+        players = sorted(tournament.players, key=operator.attrgetter('rank'))
+    else:
+        players = sorted(tournament.players, key=operator.attrgetter('last_name'))
+
+    players = {
         f"{p.first_name} {p.last_name}": (
+            f"{p.first_name} {p.last_name}\n"
             f"rank:       {p.rank}\n"
             f"score:      {p.score}\n"
             f"birth date: {p.birth_date}\n"
             f"gender:     {p.gender}"
-        ) for p in tournament.players
+        ) for p in players
     }
-    win = view.MenuWin(MENU_H, MENU_W, 2, 2, **p)
+    win = view.MenuWin(MENU_H, MENU_W, 2, 2, **players)
     win.draw()
     selected = win.navigate()
     win.clear()
@@ -86,9 +104,27 @@ def update_rank(tournament):
     results = win.get_results()
     if win.validate(results):
         tournament.players[selected].update_rank(results['rank'])
-        view.Popup("info", "new player rank saved").draw()
+        view.Popup("info", "player rank updated").draw()
     else:
-        view.Popup("info", "player rank not updated").draw()
+        view.Popup("info", "new player rank discarded").draw()
+
+
+def update_description(tournament):
+    form = [
+        {
+            'name': "descriptiom",
+            'title': "description",
+            'type': "long"
+        }
+    ]
+    win = view.InputWin(INFO_W, INFO_W, 2, MENU_W + 8, *form)
+    win.draw()
+    results = win.get_results()
+    if win.validate(results):
+        tournament.update_description(results['description'])
+        view.Popup("info", "description updated").draw()
+    else:
+        view.Popup("info", "new description discarded").draw()
 
 
 def menu_template(tournament):
@@ -107,7 +143,8 @@ def menu_template(tournament):
         **round_states[tournament.round_started],
         'save': "save the current state of the tournament",
         'show players': "Show the players participating in the tournament",
-        'update rank': "Update a player's rank"
+        'update player rank': "Update a player's rank",
+        'update description': "change the description of the tournament"
     }
     return template
 
@@ -136,6 +173,9 @@ def tournament_menu(tournament):
             menu.draw()
         elif selected == 4:
             update_rank(tournament)
+            menu.draw()
+        elif selected == 5:
+            update_description(tournament)
             menu.draw()
 
 
@@ -247,7 +287,7 @@ def new_player():
         }
     ]
 
-    win = view.InputWin(INFO_H, INFO_W, 2, MENU_W + 8, *form)
+    win = view.InputWin(INFO_H, INFO_W, 2, MENU_W+8, *form)
     win.draw()
     results = win.get_results()
     if win.validate(results):
@@ -263,7 +303,19 @@ def list_players():
     if model.number_of_players() <= 0:
         view.Popup("info", "No players in the database").draw()
     else:
-        players = model.list_players()
+        form = [
+            {
+                'name': "sort_method",
+                'title': "sort method",
+                'type': "select",
+                'options': ["alpha", "rank", "id"]
+            }
+        ]
+        win = view.InputWin(INFO_H, INFO_W, 2, MENU_W+8, *form)
+        win.draw()
+        sort_method = win.get_results()['sort_method']
+
+        players = model.list_players(sort_method)
         win = view.MenuWin(MENU_H, MENU_W, 2, 2, **players)
         win.draw()
         selected = win.navigate()

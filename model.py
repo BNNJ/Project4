@@ -57,11 +57,17 @@ def get_player(_id):
         return Player(**player)
 
 
-def list_players():
+def list_players(sort_method="id"):
     players = TinyDB(PLAYERS_DB).all()
     if len(players) > 0:
+        if sort_method == "rank":
+            players = sorted(players, key=operator.itemgetter('rank'))
+        elif sort_method == "alpha":
+            players = sorted(players, key=operator.itemgetter('last_name'))
         return {
-            f"{str(p.doc_id):<3}: {p['first_name']} {p['last_name']}": (
+            f"{p['first_name']} {p['last_name']}": (
+                f"{p['first_name']} {p['last_name']}\n"
+                f"id:         {p.doc_id}\n"
                 f"gender:     {p['gender']}\n"
                 f"birth_date: {p['birth_date']}\n"
                 f"rank:       {p['rank']}"
@@ -192,12 +198,6 @@ class Tournament:
                 self.score[p._id] = p.score
 
     def serialize(self):
-        # t = dict(self.__dict__)
-        # t['players'] = [p._id for p in self.players]
-        # t['rounds'] = [r.serialize() for r in self.rounds]
-        # del t['current_round']
-        # del t['players_count']
-        # return t
         return {
             'name': self.name,
             'location': self.location,
@@ -214,14 +214,12 @@ class Tournament:
             'score': self.score
         }
 
+    def update_description(self, desc):
+        self.description = desc
+
     def save(self):
         db = TinyDB(TOURNAMENTS_DB)
         db.upsert(self.serialize(), where('_id') == self._id)
-        # tournament = db.get(where('name') == self.name)
-        # if tournament is None:
-        #     db.insert(self.serialize())
-        # else:
-        #     db.update(self.serialize(), doc_ids=[tournament.doc_id])
 
     def swiss_sort(self):
         players = sorted(self.players, key=operator.attrgetter('rank'))

@@ -220,7 +220,7 @@ class InputWin(Win):
                 self.win.addstr(chr(c))
                 x += 1
         curses.curs_set(0)
-        return buff
+        return int(buff)
 
     def date_field(self, y, title, data):
         curses.textpad.rectangle(self.win, y, 0, y + 2, 13)
