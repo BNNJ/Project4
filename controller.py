@@ -14,7 +14,10 @@ def finish_round(tournament):
     form = [
         {
             'name': i,
-            'title': f"{m.white._id} vs {m.black._id}",
+            'title': (
+                f"{m.white.first_name} (white) "
+                f"vs {m.black.first_name} (black)"
+            ),
             'type': "select",
             'options': ["black", "white", "draw"]
         } for i, m in enumerate(tournament.current_round.matches)
@@ -25,9 +28,9 @@ def finish_round(tournament):
     if win.validate(results):
         results = list(results.values())
         tournament.end_round(results)
-        view.Popup("info", "round finished, scores registered")
+        view.Popup("info", "round finished, scores registered").draw()
     else:
-        view.Popup("info", "scores discarded")
+        view.Popup("info", "scores discarded").draw()
 
 
 def start_round(tournament):
@@ -35,7 +38,21 @@ def start_round(tournament):
 
 
 def save_tournament(tournament):
-    tournament.save()
+    form = [
+        {
+            'name': 'save',
+            'title': "save tournament ?",
+            'type': "select",
+            'options': ["Yes", "No"]
+        }
+    ]
+    win = view.InputWin(INFO_H, INFO_W, 2, MENU_W + 8, *form)
+    win.draw()
+    if win.get_results()['save'] == "Yes":
+        tournament.save()
+        view.Popup("info", "tournament saved").draw()
+    else:
+        view.Popup("info", "tournament not saved").draw()
 
 
 def show_players(tournament):
@@ -49,9 +66,29 @@ def show_players(tournament):
     }
     win = view.MenuWin(MENU_H, MENU_W, 2, 2, **p)
     win.draw()
-    win.navigate()
+    selected = win.navigate()
     win.clear()
     win.refresh()
+    return selected
+
+
+def update_rank(tournament):
+    selected = show_players(tournament)
+    form = [
+        {
+            'name': "rank",
+            'title': "new rank",
+            'type': "int"
+        }
+    ]
+    win = view.InputWin(INFO_W, INFO_W, 2, MENU_W + 8, *form)
+    win.draw()
+    results = win.get_results()
+    if win.validate(results):
+        tournament.players[selected].update_rank(results['rank'])
+        view.Popup("info", "new player rank saved").draw()
+    else:
+        view.Popup("info", "player rank not updated").draw()
 
 
 def menu_template(tournament):
@@ -70,6 +107,7 @@ def menu_template(tournament):
         **round_states[tournament.round_started],
         'save': "save the current state of the tournament",
         'show players': "Show the players participating in the tournament",
+        'update rank': "Update a player's rank"
     }
     return template
 
@@ -96,32 +134,21 @@ def tournament_menu(tournament):
         elif selected == 3:
             show_players(tournament)
             menu.draw()
+        elif selected == 4:
+            update_rank(tournament)
+            menu.draw()
 
 
 ###############################################################################
 # MAIN MENU
 ###############################################################################
 
-MENU = {
-    'current tournament': (
-        "More options for the current tournament:\n"
-        "* save tournament\n"
-        "* register round or match\n"
-        "* declare winner\n"
-        "..."
-    ),
-    'start a tournament': "Start a new tournament",
-    'load a tournament': (
-        "Load a previously started tournament,"
-        " from the tournament database"
-    ),
-    'tournament list': "Display the list of tournaments in the database",
-    'add a player': "Add a new player to the database",
-    'show all players': "Show all players in the database",
-}
-
 
 def new_tournament():
+    if model.number_of_players() < 8:
+        view.Popup("info", "not enough players in the database !").draw()
+        return
+
     form = [
         {
             'name': "name",
@@ -233,16 +260,16 @@ def new_player():
 
 
 def list_players():
-    players = model.list_players()
-    if players is not None:
+    if model.number_of_players() <= 0:
+        view.Popup("info", "No players in the database").draw()
+    else:
+        players = model.list_players()
         win = view.MenuWin(MENU_H, MENU_W, 2, 2, **players)
         win.draw()
         selected = win.navigate()
         win.clear()
         win.refresh()
         return selected + 1  # adjust for 1-indexed database id
-    else:
-        view.Popup("info", "No players in the database").draw()
 
 
 def controller(stdscr):
@@ -254,7 +281,26 @@ def controller(stdscr):
     INFO_H = MENU_H
     INFO_W = W - (MENU_W + 12)
 
-    menu = view.MenuWin(MENU_H, MENU_W, 2, 2, **MENU)
+    menu = {
+        'current tournament': (
+            "More options for the current tournament:\n"
+            "* save tournament\n"
+            "* register round or match\n"
+            "* declare winner\n"
+            "..."
+        ),
+        'start a tournament': "Start a new tournament",
+        'load a tournament': (
+            "Load a previously started tournament,"
+            " from the tournament database"
+        ),
+        'tournament list': "Display the list of tournaments in the database",
+        'add a player': "Add a new player to the database",
+        'show all players': "Show all players in the database",
+        'exit': "Exit the program. Don't forget to save your stuff !"
+    }
+
+    menu = view.MenuWin(MENU_H, MENU_W, 2, 2, **menu)
     tournament = None
     while True:
         menu.draw()

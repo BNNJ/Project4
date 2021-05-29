@@ -27,7 +27,7 @@ def size_check():
     term_size = os.get_terminal_size()
     rows = term_size.lines
     cols = term_size.columns
-    return (rows >= 30 and cols >= 80)
+    return (rows >= 30 and cols >= 60)
 
 
 def main():

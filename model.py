@@ -18,7 +18,7 @@ class Player:
         self.birth_date = birth_date
         self.rank = rank
         self.gender = gender.lower()
-        self._id = _id or len(TinyDB(TOURNAMENTS_DB)) + 1
+        self._id = _id
         self.score = 0
 
     def serialize(self):
@@ -35,7 +35,7 @@ class Player:
         else:
             db.update(self.serialize(), doc_ids=[player.doc_id])
 
-    def change_rank(self, rank):
+    def update_rank(self, rank):
         self.rank = rank
 
     def __str__(self):
@@ -53,6 +53,7 @@ def new_player(first_name, last_name, gender, birth_date, rank):
 def get_player(_id):
     player = TinyDB(PLAYERS_DB).get(doc_id=_id)
     if player is not None:
+        player['_id'] = player.doc_id
         return Player(**player)
 
 
@@ -72,6 +73,10 @@ def get_players(ids):
     with open('log2.txt', 'a') as f:
         f.write(f"{ids}\n")
     return [get_player(i) for i in ids]
+
+
+def number_of_players():
+    return len(TinyDB(PLAYERS_DB))
 
 
 ###############################################################################
@@ -157,7 +162,7 @@ class Tournament:
         self.round_nb = round_nb
         self.round_started = round_started
         self.current_round = None if round_nb == 0 else self.rounds[round_nb-1]
-        self._id = _id or len(TinyDB(TOURNAMENTS_DB)) + 1
+        self._id = _id
         self.previously_played = previously_played
         self.score = score
 
@@ -250,6 +255,7 @@ class Tournament:
 def load_tournament(_id):
     tournament = TinyDB(TOURNAMENTS_DB).get(doc_id=_id)
     if tournament is not None:
+        tournament['_id'] = tournament.doc_id
         return Tournament(**tournament)
 
 
@@ -265,6 +271,7 @@ def list_tournaments():
                 f"description: {t['description']}\n"
             ) for t in tournaments
         }
+
 
 ###############################################################################
 

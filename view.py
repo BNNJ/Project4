@@ -148,22 +148,52 @@ class InfoWin(Win):
 
 
 class InputWin(Win):
+
+    input_len = 40
+
     def __init__(self, y, x, h, w, *args):
         self.results = {}
         super().__init__(y, x, h, w, *args)
 
     def input_field(self, y, title, data):
-        curses.textpad.rectangle(self.win, y, 0, y + 2, 32)
+        curses.textpad.rectangle(self.win, y, 0, y + 2, self.input_len + 2)
         self.addstr(y, 1, f" {title} ")
         self.addstr(y+1, 2, data)
 
+    # def get_string(self, y):
+    #     curses.echo()
+    #     curses.curs_set(1)
+    #     result = self.win.getstr(y + 1, 2, 28)
+    #     curses.curs_set(0)
+    #     curses.noecho()
+    #     return str(result, 'utf-8')
+
     def get_string(self, y):
-        curses.echo()
         curses.curs_set(1)
-        result = self.win.getstr(y + 1, 2, 28)
+        buff = ""
+        y += 1
+        x = 2
+        self.move(y, x)
+        while True:
+            c = self.getch()
+            if c in KEY_ENTER:
+                if buff == "":
+                    buff = "0"
+                break
+            elif c in KEY_BACK:
+                if x > 2:
+                    buff = buff[:-1]
+                    x -= 1
+                    self.addstr(y, x, " ")
+                    self.move(y, x)
+            elif x == self.input_len:
+                pass
+            else:
+                buff += chr(c)
+                self.win.addstr(chr(c))
+                x += 1
         curses.curs_set(0)
-        curses.noecho()
-        return str(result, 'utf-8')
+        return buff
 
     def get_int(self, y):
         curses.curs_set(1)
@@ -178,11 +208,12 @@ class InputWin(Win):
                     buff = "0"
                 break
             elif c in KEY_BACK:
-                buff = buff[:-1]
-                x -= 1
-                self.addstr(y, x, " ")
-                self.move(y, x)
-            elif x == 30:
+                if x > 2:
+                    buff = buff[:-1]
+                    x -= 1
+                    self.addstr(y, x, " ")
+                    self.move(y, x)
+            elif x == self.input_len:
                 pass
             elif ord('0') <= c <= ord('9'):
                 buff += chr(c)
@@ -235,9 +266,12 @@ class InputWin(Win):
         return f"{buff[:2]}/{buff[2:4]}/{buff[4:8]}"
 
     def long_field(self, y, title, data):
-        curses.textpad.rectangle(self.win, y, 0, y + 7, 32)
+        curses.textpad.rectangle(self.win, y, 0, y+7, self.input_len+2)
         self.addstr(y, 1, f" {title} ")
-        txt = [data[i:i+28] for i in range(0, len(data), 28)]
+        txt = [
+            data[i:i+self.input_len-2]
+            for i in range(0, len(data), self.input_len-2)
+        ]
         for y, line in enumerate(txt):
             self.addstr(y+1, 2, line)
 
@@ -256,15 +290,15 @@ class InputWin(Win):
                 if x > 2:
                     x -= 1
                 elif y > 0:
-                    x = 30
+                    x = self.input_len
                     y -= 1
                 self.addstr(start_y+y, x, " ")
-            elif x >= 30 and y >= 5:
+            elif x >= self.input_len and y >= 5:
                 pass
             elif 32 <= c <= 126:
                 txt += chr(c)
                 self.win.addstr(chr(c))
-                if x < 30:
+                if x < self.input_len:
                     x += 1
                 else:
                     x = 2
@@ -275,30 +309,30 @@ class InputWin(Win):
 
     def select_field(self, y, title, *options):
         h = len(options) + 1
-        curses.textpad.rectangle(self.win, y, 0, y + h, 32)
+        curses.textpad.rectangle(self.win, y, 0, y+h, self.input_len+2)
         self.addstr(y, 1, f" {title} ")
         for i, o in enumerate(options):
-            self.addstr(y + i + 1, 2, o)
+            self.addstr(y+i+1, 2, o)
 
     def get_selection(self, y, *options):
         selected = 0
         nb_opt = len(options)
-        self.highlight_on(y + 1, 1, 31)
+        self.highlight_on(y + 1, 1, self.input_len+1)
         while True:
             c = self.win.getch()
             if c in [KEY_DOWN, KEY_UP]:
-                self.highlight_off(y + selected + 1, 1, 31)
+                self.highlight_off(y + selected + 1, 1, self.input_len+1)
                 selected += DIRECTIONS[c]
                 selected %= nb_opt
-                self.highlight_on(y + selected + 1, 1, 31)
+                self.highlight_on(y + selected + 1, 1, self.input_len+1)
             elif c in KEY_ENTER:
-                self.highlight_off(y + selected + 1, 1, 31)
+                self.highlight_off(y + selected + 1, 1, self.input_len+1)
                 return options[selected]
 
     def get_menu(self, y, nb_choices, **options):
         menu = MenuWin(self.h, 24, 2, 2, **options)
         menu.draw()
-        self.highlight_on(y+1, 1, 31)
+        self.highlight_on(y+1, 1, self.input_len+1)
         self.getch()
 
         players = []
@@ -315,7 +349,7 @@ class InputWin(Win):
         menu.clear()
         menu.refresh()
 
-        self.highlight_off(y+1, 1, 31)
+        self.highlight_off(y+1, 1, self.input_len+1)
         self.draw()
         return players
 
@@ -323,12 +357,12 @@ class InputWin(Win):
         y = 0
         for f in self.args:
             if f['type'] in ["string", "int"]:
-                self.input_field(y, f['title'], self.results.get(f['name'],
-                                                                 ""))
+                self.input_field(y, f['title'],
+                                 self.results.get(f['name'], ""))
                 y += 4
             elif f['type'] == "date":
-                self.date_field(y, f['title'], self.results.get(f['name'],
-                                                                "  /  /    "))
+                self.date_field(y, f['title'],
+                                self.results.get(f['name'], "  /  /    "))
                 y += 4
             elif f['type'] == "long":
                 self.long_field(y, f['title'], self.results.get(f['name'], ""))
@@ -419,13 +453,13 @@ def leap_year(y):
 
 
 def date_is_valid(d):
+    if (len(d) != 8):
+        return False
     day = int(d[:2])
     month = int(d[2:4])
     year = int(d[4:8])
 
-    if (len(d) != 8):
-        return False
-    elif (month <= 0) or (month > 12):
+    if (month <= 0) or (month > 12):
         return False
     elif (month == 2) and (not leap_year(year)) and (day > 28):
         return False
@@ -443,6 +477,11 @@ def init(stdscr):
     curses.curs_set(0)
     stdscr.keypad(1)
     stdscr.box()
+    h, w = stdscr.getmaxyx()
+    title = " SUPER CHESS PRO ORGANIZER 3000 "
+    stdscr.addstr(0, w//2 - len(title)//2, title)
+    info = " arrow keys to navigate, enter to select, q to quit "
+    stdscr.addstr(h-1, w//2 - len(info)//2, info)
     stdscr.refresh()
 
 
