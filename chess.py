@@ -27,11 +27,11 @@ def size_check():
     term_size = os.get_terminal_size()
     rows = term_size.lines
     cols = term_size.columns
-    return (rows >= 30 and cols >= 60)
+    return (rows >= 30 and cols >= 80)
 
 
 def main():
-    if size_check:
+    if size_check():
         args = parse_args()
         start(args.players, args.tournaments)
     else:
