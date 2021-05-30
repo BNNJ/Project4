@@ -6,9 +6,7 @@ Chess tournament organizer with a curses TUI
 
 Make windows req.txt, make sure everything works there
 	- display bugs all over the place
-	- match bug : all matches are player1 vs player1
-
-fix empty date bug
+	- maybe use the same input method for string fields as for the other ones ?
 
 ## setup
 
