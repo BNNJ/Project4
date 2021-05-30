@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import operator
 import model
 import view
+from operator import attrgetter
 
 QUIT = -1
 
@@ -69,9 +69,9 @@ def show_players(tournament):
     win.draw()
 
     if win.get_results()['sort_method'] == "rank":
-        players = sorted(tournament.players, key=operator.attrgetter('rank'))
+        players = sorted(tournament.players, key=attrgetter('rank'))
     else:
-        players = sorted(tournament.players, key=operator.attrgetter('last_name'))
+        players = sorted(tournament.players, key=attrgetter('last_name'))
 
     players = {
         f"{p.first_name} {p.last_name}": (
@@ -141,10 +141,24 @@ def menu_template(tournament):
             f"players:       {tournament.players}"
         ),
         **round_states[tournament.round_started],
-        'save': "save the current state of the tournament",
+        'save': "Save the current state of the tournament",
         'show players': "Show the players participating in the tournament",
+        'show rounds': '\n'.join([
+            (
+                f"{r.name}: "
+                f"{[f'{m.white._id}v{m.black._id}' for m in r.matches]}"
+            ) for r in tournament.rounds
+        ]),
+        'show matches': '\n'.join(
+            [
+                (
+                    f"{m.white.full_name:>22}  {m.white_score:>3}"
+                    f" vs {m.black_score:<3}  {m.black.full_name :<22}"
+                ) for r in tournament.rounds for m in r.matches
+            ]
+        ),
         'update player rank': "Update a player's rank",
-        'update description': "change the description of the tournament"
+        'update description': "Change the description of the tournament"
     }
     return template
 
@@ -170,11 +184,14 @@ def tournament_menu(tournament):
             save_tournament(tournament)
         elif selected == 3:
             show_players(tournament)
-            menu.draw()
         elif selected == 4:
+            pass
+        elif selected == 5:
+            pass
+        elif selected == 6:
             update_rank(tournament)
             menu.draw()
-        elif selected == 5:
+        elif selected == 7:
             update_description(tournament)
             menu.draw()
 

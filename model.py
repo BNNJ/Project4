@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import operator
+from operator import attrgetter, itemgetter
 from tinydb import TinyDB, where
 from datetime import datetime
 
@@ -20,16 +20,14 @@ class Player:
         self.gender = gender.lower()
         self._id = _id
         self.score = 0
+        self.full_name = f"{self.first_name} {self.last_name}"
 
     def serialize(self):
         return self.__dict__
 
     def save(self):
         db = TinyDB(PLAYERS_DB)
-        player = db.get(
-            (where('first_name') == self.first_name)
-            & (where('last_name') == self.last_name)
-        )
+        player = db.get(where('full_name') == self.full_name)
         if player is None:
             db.insert(self.serialize())
         else:
@@ -57,28 +55,26 @@ def get_player(_id):
         return Player(**player)
 
 
+def get_players(ids):
+    return [get_player(i) for i in ids]
+
+
 def list_players(sort_method="id"):
     players = TinyDB(PLAYERS_DB).all()
     if len(players) > 0:
         if sort_method == "rank":
-            players = sorted(players, key=operator.itemgetter('rank'))
+            players = sorted(players, key=itemgetter('rank'))
         elif sort_method == "alpha":
-            players = sorted(players, key=operator.itemgetter('last_name'))
+            players = sorted(players, key=itemgetter('last_name'))
         return {
-            f"{p['first_name']} {p['last_name']}": (
-                f"{p['first_name']} {p['last_name']}\n"
+            f"{p['full_name']}": (
+                f"{p['full_name']}\n"
                 f"id:         {p.doc_id}\n"
                 f"gender:     {p['gender']}\n"
                 f"birth_date: {p['birth_date']}\n"
                 f"rank:       {p['rank']}"
             ) for p in players
         }
-
-
-def get_players(ids):
-    with open('log2.txt', 'a') as f:
-        f.write(f"{ids}\n")
-    return [get_player(i) for i in ids]
 
 
 def number_of_players():
@@ -222,9 +218,9 @@ class Tournament:
         db.upsert(self.serialize(), where('_id') == self._id)
 
     def swiss_sort(self):
-        players = sorted(self.players, key=operator.attrgetter('rank'))
+        players = sorted(self.players, key=attrgetter('rank'))
         if self.round_nb > 0:
-            players = sorted(players, key=operator.attrgetter('score'))
+            players = sorted(players, key=attrgetter('score'))
             players = [p._id for p in players]
             if players[1] in self.previously_played.get(players[0], []):
                 players[0], players[1] = players[1], players[0]
