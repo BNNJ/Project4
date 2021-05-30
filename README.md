@@ -2,7 +2,7 @@
 
 Chess tournament organizer with a curses TUI
 
-Made for Linux.
+Made for Linux.\
 Works on Windows, but with display glitches (menus not refreshing, input field boxes glitching after refresh)
 
 ## setup
@@ -32,7 +32,7 @@ Source the environment script:
 | Windows     | cmd.exe           | `C:\> .\Scripts\activate.bat`           |
 |             | PowerShell        | `PS C:\> .\Scripts\Activate.ps1`        |
 
-now install required modules:
+now install required modules:\
 for Linux/macOs:
 ```bash
 pip install -r requirement.txt
