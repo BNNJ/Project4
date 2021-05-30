@@ -2,11 +2,8 @@
 
 Chess tournament organizer with a curses TUI
 
-## todo
-
-Make windows req.txt, make sure everything works there
-	- display bugs all over the place
-	- maybe use the same input method for string fields as for the other ones ?
+Made for Linux.
+Works on Windows, but with display glitches (menus not refreshing, input field boxes glitching after refresh)
 
 ## setup
 
@@ -36,12 +33,20 @@ Source the environment script:
 |             | PowerShell        | `PS C:\> .\Scripts\Activate.ps1`        |
 
 now install required modules:
+for Linux/macOs:
 ```bash
 pip install -r requirement.txt
+```
+for Windows:
+```bash
+pip install -r requirement_windows.txt
 ```
 
 ## usage
 
+```bash
+./chess [-p/--players player_database] [-t/--tournaments tournament_database]
+```
 
 ## arguments
 
@@ -50,5 +55,3 @@ argument            | effect
 -h, --help          | show help message and exit
 -t, --tournaments T | specify tournaments database
 -p, --players P     | specify players database
-
-## examples
