@@ -112,7 +112,7 @@ def update_rank(tournament):
 def update_description(tournament):
     form = [
         {
-            'name': "descriptiom",
+            'name': "description",
             'title': "description",
             'type': "long"
         }
