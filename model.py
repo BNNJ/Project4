@@ -29,7 +29,7 @@ class Player:
         db = TinyDB(PLAYERS_DB)
         player = db.get(where('full_name') == self.full_name)
         if player is None:
-            db.insert(self.serialize())
+            self._id = db.insert(self.serialize())
         else:
             db.update(self.serialize(), doc_ids=[player.doc_id])
 
@@ -113,6 +113,9 @@ class Match:
             [self.black._id, self.black_score],
         )
 
+    def __str__(self):
+        return (f"{self.white.full_name:>22}  {self.white_score:>3}"
+                f" vs {self.black_score:<3}  {self.black.full_name :<22}")
 
 ###############################################################################
 # ROUND
@@ -140,6 +143,11 @@ class Round:
             'start_time': self.start_time,
             'end_time': self.end_time
         }
+
+    def __str__(self):
+        matches = '\n'.join(m.__str__() for m in self.matches)
+        return (f"{self.name}:\n    started:    {self.start_time}\n"
+                f"    finished:   {self.end_time}\n{matches}")
 
 ###############################################################################
 # TOURNAMENT
@@ -215,7 +223,11 @@ class Tournament:
 
     def save(self):
         db = TinyDB(TOURNAMENTS_DB)
-        db.upsert(self.serialize(), where('_id') == self._id)
+        tournament = db.get(where('name') == self.name)
+        if tournament is None:
+            self._id = db.insert(self.serialize())
+        else:
+            db.update(self.serialize(), doc_ids=[tournament.doc_id])
 
     def swiss_sort(self):
         players = sorted(self.players, key=attrgetter('rank'))

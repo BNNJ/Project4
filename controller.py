@@ -143,19 +143,9 @@ def menu_template(tournament):
         **round_states[tournament.round_started],
         'save': "Save the current state of the tournament",
         'show players': "Show the players participating in the tournament",
-        'show rounds': '\n'.join([
-            (
-                f"{r.name}: "
-                f"{[f'{m.white._id}v{m.black._id}' for m in r.matches]}"
-            ) for r in tournament.rounds
-        ]),
+        'show rounds': '\n'.join([r.__str__() for r in tournament.rounds]),
         'show matches': '\n'.join(
-            [
-                (
-                    f"{m.white.full_name:>22}  {m.white_score:>3}"
-                    f" vs {m.black_score:<3}  {m.black.full_name :<22}"
-                ) for r in tournament.rounds for m in r.matches
-            ]
+            [m.__str__() for r in tournament.rounds for m in r.matches]
         ),
         'update player rank': "Update a player's rank",
         'update description': "Change the description of the tournament"
