@@ -35,17 +35,21 @@ Source the environment script:
 now install required modules:\
 for Linux/macOs:
 ```bash
-pip install -r requirement.txt
+pip install -r requirements.txt
 ```
 for Windows:
 ```bash
-pip install -r requirement_windows.txt
+pip install -r requirements-windows.txt
 ```
 
 ## usage
 
 ```bash
-./chess [-p/--players player_database] [-t/--tournaments tournament_database]
+./chess.py [-p/--players player_database] [-t/--tournaments tournament_database]
+```
+or for windows:
+```bash
+python ./chess.py [-p/--players player_database] [-t/--tournaments tournament_database]
 ```
 
 ## arguments
