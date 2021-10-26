@@ -5,6 +5,18 @@ Chess tournament organizer with a curses TUI
 Made for Linux.\
 Works on Windows, but with display glitches (menus not refreshing, input field boxes glitching after refresh)
 
+## flake8 report
+
+To generate a flake8 report:
+```bash
+flake8 *.py
+```
+
+To generate a flake8report in html format:
+```bash
+flake8 --format=html --htmldir=flake8_report *.py
+```
+
 ## setup
 
 First clone the repo :
