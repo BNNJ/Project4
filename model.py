@@ -194,7 +194,7 @@ class Tournament:
 
     def end_round(self, results):
         self.round_started = False
-        if self.round_nb == self.max_round:
+        if self.round_nb > self.max_round:
             self.end()
         else:
             self.current_round.end(results)
