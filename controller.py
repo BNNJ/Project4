@@ -385,6 +385,8 @@ def controller(stdscr):
             new_player()
         elif selected == 5:
             list_players()
+        elif selected == 6:
+            break
     view.stop()
 
 
